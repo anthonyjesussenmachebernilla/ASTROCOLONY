@@ -8,6 +8,7 @@ import {
   useMemo,
   useRef,
   useState,
+  Suspense,
   type ReactNode,
 } from 'react';
 import * as THREE from 'three';
@@ -18,7 +19,8 @@ import type {
   SpaceEventType,
 } from '@/modules/simulation/domain/types';
 import { ModuleInterior3D } from './ModuleInterior3D';
-import { SpaceKitModel } from './SpaceKitModel';
+import { VanguardCharacter, type Locomotion } from './VanguardCharacter';
+import { MARS_ROCKS, resolveWorldCollisions } from './colony-collision';
 
 /* ----------------------------- utilidades ----------------------------- */
 
@@ -282,16 +284,14 @@ function Terrain() {
 }
 
 function Scenery() {
-  const rocks = useMemo(() => {
-    const r = seeded(11);
-    return Array.from({ length: 70 }, () => {
-      const angle = r() * Math.PI * 2;
-      const dist = 17 + r() * 55;
-      const x = Math.cos(angle) * dist;
-      const z = Math.sin(angle) * dist;
-      return { x, z, y: heightAt(x, z), s: 0.35 + r() * 1.4, rot: r() * 6 };
-    });
-  }, []);
+  const rocks = useMemo(
+    () =>
+      MARS_ROCKS.map((rock) => ({
+        ...rock,
+        y: heightAt(rock.x, rock.z),
+      })),
+    [],
+  );
 
   const mountains = useMemo(() => {
     const r = seeded(23);
@@ -856,7 +856,7 @@ function Crew({ crewHealth }: { crewHealth: number }) {
   return (
     <group>
       {suits.map((suit, i) => (
-        <Astronaut key={suit} radius={9 + (i % 2) * 1.6} speed={(i % 2 ? -0.16 : 0.2) * slow} phase={(i / 4) * Math.PI * 2} suit={suit} />
+        <Astronaut key={suit} radius={16.5 + (i % 2) * 1.1} speed={(i % 2 ? -0.14 : 0.16) * slow} phase={(i / 4) * Math.PI * 2} suit={suit} />
       ))}
     </group>
   );
@@ -983,8 +983,13 @@ function ExplorerController({
   const keys = useRef(new Set<string>());
   const nearby = useRef<BuildingId | null>(null);
   const dragging = useRef(false);
+  const [locomotion, setLocomotion] = useState<Locomotion>('idle');
+  const activeLocomotion = useRef<Locomotion>('idle');
   const target = useMemo(() => new THREE.Vector3(), []);
   const direction = useMemo(() => new THREE.Vector3(), []);
+  // Vanguard faces -X in its source file; align that axis with travel direction.
+  const vanguardForwardOffset = Math.PI / 2;
+  const heading = useRef(Math.PI + vanguardForwardOffset);
 
   useEffect(() => {
     const isTyping = (event: KeyboardEvent) => event.target instanceof HTMLElement && Boolean(event.target.closest('input, textarea, select, [contenteditable]'));
@@ -1034,22 +1039,33 @@ function ExplorerController({
     const delta = Math.min(rawDelta, 0.05);
     const x = Number(keys.current.has('d') || keys.current.has('arrowright')) - Number(keys.current.has('a') || keys.current.has('arrowleft'));
     const z = Number(keys.current.has('s') || keys.current.has('arrowdown')) - Number(keys.current.has('w') || keys.current.has('arrowup'));
+    const nextLocomotion: Locomotion = x || z ? (keys.current.has('shift') ? 'run' : 'walk') : 'idle';
+    if (nextLocomotion !== activeLocomotion.current) {
+      activeLocomotion.current = nextLocomotion;
+      setLocomotion(nextLocomotion);
+    }
     if (x || z) {
       direction.set(x, 0, z).normalize().applyAxisAngle(THREE.Object3D.DEFAULT_UP, yaw.current);
       const speed = keys.current.has('shift') ? 8 : 4.8;
       position.current.addScaledVector(direction, delta * speed);
-      position.current.x = THREE.MathUtils.clamp(position.current.x, -36, 36);
-      position.current.z = THREE.MathUtils.clamp(position.current.z, -36, 36);
-      if (astronaut.current) astronaut.current.rotation.y = Math.atan2(-direction.x, -direction.z);
+      const resolved = resolveWorldCollisions(position.current.x, position.current.z, 0.55, 36);
+      position.current.x = resolved.x;
+      position.current.z = resolved.z;
+      const desiredHeading = Math.atan2(direction.x, direction.z) + vanguardForwardOffset;
+      const difference = Math.atan2(Math.sin(desiredHeading - heading.current), Math.cos(desiredHeading - heading.current));
+      heading.current += difference * (1 - Math.exp(-12 * delta));
     }
     position.current.y = heightAt(position.current.x, position.current.z);
-    if (astronaut.current) astronaut.current.position.copy(position.current);
+    if (astronaut.current) {
+      astronaut.current.position.copy(position.current);
+      astronaut.current.rotation.y = heading.current;
+    }
 
     let closest: BuildingId | null = null;
     let closestDistance = Infinity;
     for (const [id, layout] of Object.entries(BUILDING_LAYOUT) as [BuildingId, typeof BUILDING_LAYOUT[BuildingId]][]) {
       const distance = Math.hypot(position.current.x - layout.position[0], position.current.z - layout.position[2]);
-      const radius = id === 'HABITAT' ? 8.5 : id === 'SOLAR_PANELS' ? 6.5 : 5;
+      const radius = id === 'HABITAT' ? 8.8 : id === 'SOLAR_PANELS' ? 7.2 : 5.2;
       if (distance < radius && distance < closestDistance) { closest = id; closestDistance = distance; }
     }
     if (closest !== nearby.current) { nearby.current = closest; onNearbyChange(closest); }
@@ -1059,13 +1075,23 @@ function ExplorerController({
     const look = new THREE.Vector3(-Math.sin(yaw.current) * Math.cos(pitch.current), Math.sin(pitch.current), -Math.cos(yaw.current) * Math.cos(pitch.current));
     const desired = firstPerson
       ? target.clone()
-      : target.clone().addScaledVector(look, -9).add(new THREE.Vector3(0, 3.4, 0));
+      : target.clone().addScaledVector(look, -5.5).add(new THREE.Vector3(1.1, 1.7, 0).applyAxisAngle(THREE.Object3D.DEFAULT_UP, yaw.current));
+    if (!firstPerson) {
+      if (desired.y < 5.5) {
+        const camResolved = resolveWorldCollisions(desired.x, desired.z, 0.45, 52);
+        desired.x = camResolved.x;
+        desired.z = camResolved.z;
+      }
+      desired.y = Math.max(desired.y, heightAt(desired.x, desired.z) + 0.65);
+    }
     camera.position.lerp(desired, reducedMotion ? 1 : 1 - Math.exp(-9 * delta));
     camera.lookAt(target.clone().addScaledVector(look, 8));
   });
 
-  return <group ref={astronaut} visible={!firstPerson} position={[0, 0, 26]}>
-    <SpaceKitModel name="astronaut" scale={0.8} />
+  return <group ref={astronaut} visible={!firstPerson} position={[0, 0, 26]} rotation={[0, Math.PI + vanguardForwardOffset, 0]}>
+    <Suspense fallback={<mesh position={[0, 1, 0]} castShadow><capsuleGeometry args={[0.45, 1.1, 6, 12]} /><meshStandardMaterial color="#8a7768" roughness={1} /></mesh>}>
+      <VanguardCharacter locomotion={locomotion} />
+    </Suspense>
   </group>;
 }
 

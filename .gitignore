@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Source FBX pack is kept locally; the optimized GLB files in public/longbow are served by the game.
+/Longbow Locomotion Pack/
