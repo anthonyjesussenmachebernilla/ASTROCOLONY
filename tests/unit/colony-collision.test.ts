@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  getDynamicEntityColliders,
   MARS_ROCKS,
   resolveWorldCollisions,
 } from '@/modules/mission/presentation/components/colony-collision';
@@ -23,7 +24,24 @@ describe('Colony 3D Collision Resolution', () => {
     const sampleRock = MARS_ROCKS[0];
     const resolved = resolveWorldCollisions(sampleRock.x, sampleRock.z, 0.55, 80);
     const dist = Math.hypot(resolved.x - sampleRock.x, resolved.z - sampleRock.z);
-    expect(dist).toBeGreaterThanOrEqual(sampleRock.s * 0.9 + 0.55 - 0.02);
+    expect(dist).toBeGreaterThanOrEqual(sampleRock.s * 1.05 + 0.55 - 0.02);
+  });
+
+  it('prevents walking through the moving Rover and Crew astronauts', () => {
+    const dynamic = getDynamicEntityColliders(0, false, 100);
+    expect(dynamic).toHaveLength(5);
+
+    const rover = dynamic[0];
+    const resolvedRover = resolveWorldCollisions(rover.x, rover.z, 0.55, 36, dynamic);
+    expect(Math.hypot(resolvedRover.x - rover.x, resolvedRover.z - rover.z)).toBeGreaterThanOrEqual(
+      rover.radius + 0.55 - 0.01,
+    );
+
+    const crewMember = dynamic[1];
+    const resolvedCrew = resolveWorldCollisions(crewMember.x, crewMember.z, 0.55, 36, dynamic);
+    expect(
+      Math.hypot(resolvedCrew.x - crewMember.x, resolvedCrew.z - crewMember.z),
+    ).toBeGreaterThanOrEqual(crewMember.radius + 0.55 - 0.01);
   });
 
   it('keeps the Rover ellipse and player spawn clear of rocks', () => {

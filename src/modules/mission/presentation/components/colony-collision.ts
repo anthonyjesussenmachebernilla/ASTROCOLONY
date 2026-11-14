@@ -45,19 +45,38 @@ export const BUILDING_POSITIONS: Record<BuildingId, [number, number]> = {
   COMMS_ANTENNA: [14.5, -0.5],
 };
 
+// Debe coincidir con SUN_POSITION = [-42, 34, -36] en MarsScene3D.tsx
+const SOLAR_FACING = Math.atan2(42, 36);
+
+const SOLAR_PANEL_COLLIDERS: CircleCollider[] = (() => {
+  const cos = Math.cos(SOLAR_FACING);
+  const sin = Math.sin(SOLAR_FACING);
+  const list: CircleCollider[] = [];
+  for (const row of [-1, 0, 1]) {
+    for (const col of [-1.5, -0.5, 0.5, 1.5]) {
+      const lx = col * 2.9;
+      const lz = row * 2.6;
+      const wx = -1 + lx * cos + lz * sin;
+      const wz = 13 - lx * sin + lz * cos;
+      list.push({ kind: 'circle', x: wx, z: wz, radius: 1.35 });
+    }
+  }
+  return list;
+})();
+
 export const BUILDING_COLLIDERS: WorldCollider[] = [
   // Domo y plataforma del Hábitat principal
-  { kind: 'circle', x: 0, z: 0, radius: 6.9 },
+  { kind: 'circle', x: 0, z: 0, radius: 7.0 },
   // Invernadero
-  { kind: 'circle', x: 9.5, z: -5.5, radius: 3.3 },
+  { kind: 'circle', x: 9.5, z: -5.5, radius: 3.35 },
   // Laboratorio científico (caja 4.4 x 3.2)
-  { kind: 'box', x: -9, z: -6, halfW: 2.3, halfD: 1.7 },
+  { kind: 'box', x: -9, z: -6, halfW: 2.35, halfD: 1.75 },
   // Generador de oxígeno (caja 3.8 x 2.0)
-  { kind: 'box', x: -10, z: 4.5, halfW: 2.0, halfD: 1.15 },
+  { kind: 'box', x: -10, z: 4.5, halfW: 2.05, halfD: 1.15 },
   // Banco de baterías (caja 6.4 x 2.6)
-  { kind: 'box', x: 10.5, z: 6, halfW: 3.3, halfD: 1.4 },
-  // Campo de paneles solares
-  { kind: 'circle', x: -1, z: 13, radius: 5.4 },
+  { kind: 'box', x: 10.5, z: 6, halfW: 3.35, halfD: 1.45 },
+  // Cada panel solar individual en su orientación real
+  ...SOLAR_PANEL_COLLIDERS,
   // Refugio antirradiación
   { kind: 'circle', x: 4, z: -12, radius: 3.0 },
   // Base de la antena de comunicaciones
@@ -98,10 +117,44 @@ const ALL_COLLIDERS: WorldCollider[] = [
       kind: 'circle',
       x: rock.x,
       z: rock.z,
-      radius: rock.s * 0.9,
+      radius: rock.s * 1.05,
     }),
   ),
 ];
+
+export function getDynamicEntityColliders(
+  elapsedTime: number,
+  motion: boolean,
+  crewHealth: number,
+): CircleCollider[] {
+  const colliders: CircleCollider[] = [];
+
+  // Rover en órbita elíptica (24 x 19)
+  const roverT = motion ? elapsedTime * 0.12 : 0;
+  colliders.push({
+    kind: 'circle',
+    x: Math.cos(roverT) * 24,
+    z: Math.sin(roverT) * 19,
+    radius: 1.65,
+  });
+
+  // 4 astronautas de la tripulación alrededor de la base
+  const slow = crewHealth < 40 ? 0.5 : 1;
+  for (let i = 0; i < 4; i++) {
+    const radius = 16.5 + (i % 2) * 1.1;
+    const speed = (i % 2 ? -0.14 : 0.16) * slow;
+    const phase = (i / 4) * Math.PI * 2;
+    const t = motion ? elapsedTime * speed + phase : phase;
+    colliders.push({
+      kind: 'circle',
+      x: Math.cos(t) * radius,
+      z: Math.sin(t) * radius,
+      radius: 0.55,
+    });
+  }
+
+  return colliders;
+}
 
 function pushOutOfCircle(
   px: number,
@@ -166,20 +219,22 @@ function pushOutOfBox(
 
 /**
  * Resuelve colisiones en 2D (XZ) empujando al astronauta o cámara fuera de
- * edificios y rocas para que deslice suavemente por las paredes sin traspasarlas.
+ * edificios, rocas, rover y tripulación para que deslice suavemente sin traspasarlos.
  */
 export function resolveWorldCollisions(
   x: number,
   z: number,
   entityRadius = 0.55,
   bounds = 36,
+  extraColliders: WorldCollider[] = [],
 ): { x: number; z: number } {
   let px = Math.max(-bounds, Math.min(bounds, x));
   let pz = Math.max(-bounds, Math.min(bounds, z));
+  const colliders = extraColliders.length > 0 ? [...ALL_COLLIDERS, ...extraColliders] : ALL_COLLIDERS;
 
   // Dos pasadas para resolver esquinas donde coinciden dos obstáculos
   for (let pass = 0; pass < 2; pass++) {
-    for (const col of ALL_COLLIDERS) {
+    for (const col of colliders) {
       if (col.kind === 'circle') {
         [px, pz] = pushOutOfCircle(px, pz, col.x, col.z, col.radius + entityRadius);
       } else {

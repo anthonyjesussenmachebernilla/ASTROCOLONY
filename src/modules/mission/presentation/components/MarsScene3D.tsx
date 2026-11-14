@@ -19,7 +19,11 @@ import type {
   SpaceEventType,
 } from '@/modules/simulation/domain/types';
 import { ModuleInterior3D } from './ModuleInterior3D';
-import { MARS_ROCKS, resolveWorldCollisions } from './colony-collision';
+import {
+  getDynamicEntityColliders,
+  MARS_ROCKS,
+  resolveWorldCollisions,
+} from './colony-collision';
 
 /* ----------------------------- utilidades ----------------------------- */
 
@@ -756,12 +760,12 @@ function Tubes() {
         return (
           <mesh
             key={id}
-            position={[ux * mid, 0.28, uz * mid]}
+            position={[ux * mid, 0.05, uz * mid]}
             rotation={[0, Math.atan2(ux, uz), 0]}
             raycast={noRaycast}
             receiveShadow
           >
-            <boxGeometry args={[0.7, 0.4, tubeLen]} />
+            <boxGeometry args={[0.85, 0.1, tubeLen]} />
             <meshStandardMaterial color="#94a3b8" metalness={0.5} roughness={0.5} />
           </mesh>
         );
@@ -969,12 +973,14 @@ function ExplorerController({
   firstPerson,
   overview,
   reducedMotion,
+  crewHealth,
   onNearbyChange,
   onEnterBuilding,
 }: {
   firstPerson: boolean;
   overview: boolean;
   reducedMotion: boolean;
+  crewHealth: number;
   onNearbyChange: (id: BuildingId | null) => void;
   onEnterBuilding: (id: BuildingId) => void;
 }) {
@@ -1047,13 +1053,15 @@ function ExplorerController({
       direction.set(x, 0, z).normalize().applyAxisAngle(THREE.Object3D.DEFAULT_UP, yaw.current);
       const speed = keys.current.has('shift') ? 8 : 4.8;
       position.current.addScaledVector(direction, delta * speed);
-      const resolved = resolveWorldCollisions(position.current.x, position.current.z, 0.55, 36);
-      position.current.x = resolved.x;
-      position.current.z = resolved.z;
       const desiredHeading = Math.atan2(direction.x, direction.z);
       const difference = Math.atan2(Math.sin(desiredHeading - heading.current), Math.cos(desiredHeading - heading.current));
       heading.current += difference * (1 - Math.exp(-12 * delta));
     }
+    const dynamicColliders = getDynamicEntityColliders(clock.elapsedTime, !reducedMotion, crewHealth);
+    const resolved = resolveWorldCollisions(position.current.x, position.current.z, 0.55, 36, dynamicColliders);
+    position.current.x = resolved.x;
+    position.current.z = resolved.z;
+
     const bob = walking.current && !reducedMotion ? Math.abs(Math.sin(clock.elapsedTime * 8)) * 0.08 : 0;
     position.current.y = heightAt(position.current.x, position.current.z);
     if (astronaut.current) {
@@ -1084,7 +1092,7 @@ function ExplorerController({
       : target.clone().addScaledVector(look, -5.5).add(new THREE.Vector3(1.1, 1.7, 0).applyAxisAngle(THREE.Object3D.DEFAULT_UP, yaw.current));
     if (!firstPerson) {
       if (desired.y < 5.5) {
-        const camResolved = resolveWorldCollisions(desired.x, desired.z, 0.45, 52);
+        const camResolved = resolveWorldCollisions(desired.x, desired.z, 0.45, 52, dynamicColliders);
         desired.x = camResolved.x;
         desired.z = camResolved.z;
       }
@@ -1225,7 +1233,7 @@ export default function MarsScene3D({
         <DustStorm active={storm} />
         <SolarParticles active={flaring} />
 
-        <ExplorerController overview={overview} firstPerson={firstPerson} reducedMotion={reducedMotion} onNearbyChange={onNearbyChange} onEnterBuilding={onEnterBuilding} />
+        <ExplorerController overview={overview} firstPerson={firstPerson} reducedMotion={reducedMotion} crewHealth={resources.crewHealth} onNearbyChange={onNearbyChange} onEnterBuilding={onEnterBuilding} />
         </>}
       </Canvas>
     </MotionContext.Provider>
