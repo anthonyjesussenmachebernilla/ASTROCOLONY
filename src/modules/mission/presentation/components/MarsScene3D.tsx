@@ -8,7 +8,6 @@ import {
   useMemo,
   useRef,
   useState,
-  Suspense,
   type ReactNode,
 } from 'react';
 import * as THREE from 'three';
@@ -19,7 +18,6 @@ import type {
   SpaceEventType,
 } from '@/modules/simulation/domain/types';
 import { ModuleInterior3D } from './ModuleInterior3D';
-import { VanguardCharacter, type Locomotion } from './VanguardCharacter';
 import { MARS_ROCKS, resolveWorldCollisions } from './colony-collision';
 
 /* ----------------------------- utilidades ----------------------------- */
@@ -983,13 +981,10 @@ function ExplorerController({
   const keys = useRef(new Set<string>());
   const nearby = useRef<BuildingId | null>(null);
   const dragging = useRef(false);
-  const [locomotion, setLocomotion] = useState<Locomotion>('idle');
-  const activeLocomotion = useRef<Locomotion>('idle');
+  const walking = useRef(false);
   const target = useMemo(() => new THREE.Vector3(), []);
   const direction = useMemo(() => new THREE.Vector3(), []);
-  // Vanguard faces -X in its source file; align that axis with travel direction.
-  const vanguardForwardOffset = Math.PI / 2;
-  const heading = useRef(Math.PI + vanguardForwardOffset);
+  const heading = useRef(Math.PI);
 
   useEffect(() => {
     const isTyping = (event: KeyboardEvent) => event.target instanceof HTMLElement && Boolean(event.target.closest('input, textarea, select, [contenteditable]'));
@@ -1035,15 +1030,11 @@ function ExplorerController({
     };
   }, [gl]);
 
-  useFrame((_, rawDelta) => {
+  useFrame(({ clock }, rawDelta) => {
     const delta = Math.min(rawDelta, 0.05);
     const x = Number(keys.current.has('d') || keys.current.has('arrowright')) - Number(keys.current.has('a') || keys.current.has('arrowleft'));
     const z = Number(keys.current.has('s') || keys.current.has('arrowdown')) - Number(keys.current.has('w') || keys.current.has('arrowup'));
-    const nextLocomotion: Locomotion = x || z ? (keys.current.has('shift') ? 'run' : 'walk') : 'idle';
-    if (nextLocomotion !== activeLocomotion.current) {
-      activeLocomotion.current = nextLocomotion;
-      setLocomotion(nextLocomotion);
-    }
+    walking.current = Boolean(x || z);
     if (x || z) {
       direction.set(x, 0, z).normalize().applyAxisAngle(THREE.Object3D.DEFAULT_UP, yaw.current);
       const speed = keys.current.has('shift') ? 8 : 4.8;
@@ -1051,13 +1042,14 @@ function ExplorerController({
       const resolved = resolveWorldCollisions(position.current.x, position.current.z, 0.55, 36);
       position.current.x = resolved.x;
       position.current.z = resolved.z;
-      const desiredHeading = Math.atan2(direction.x, direction.z) + vanguardForwardOffset;
+      const desiredHeading = Math.atan2(direction.x, direction.z);
       const difference = Math.atan2(Math.sin(desiredHeading - heading.current), Math.cos(desiredHeading - heading.current));
       heading.current += difference * (1 - Math.exp(-12 * delta));
     }
+    const bob = walking.current && !reducedMotion ? Math.abs(Math.sin(clock.elapsedTime * 8)) * 0.08 : 0;
     position.current.y = heightAt(position.current.x, position.current.z);
     if (astronaut.current) {
-      astronaut.current.position.copy(position.current);
+      astronaut.current.position.set(position.current.x, position.current.y + bob, position.current.z);
       astronaut.current.rotation.y = heading.current;
     }
 
@@ -1088,10 +1080,23 @@ function ExplorerController({
     camera.lookAt(target.clone().addScaledVector(look, 8));
   });
 
-  return <group ref={astronaut} visible={!firstPerson} position={[0, 0, 26]} rotation={[0, Math.PI + vanguardForwardOffset, 0]}>
-    <Suspense fallback={<mesh position={[0, 1, 0]} castShadow><capsuleGeometry args={[0.45, 1.1, 6, 12]} /><meshStandardMaterial color="#8a7768" roughness={1} /></mesh>}>
-      <VanguardCharacter locomotion={locomotion} />
-    </Suspense>
+  return <group ref={astronaut} visible={!firstPerson} position={[0, 0, 26]} rotation={[0, Math.PI, 0]}>
+    <mesh position={[0, 0.8, 0]} castShadow>
+      <capsuleGeometry args={[0.3, 0.65, 6, 12]} />
+      <meshStandardMaterial color="#f8fafc" roughness={0.55} />
+    </mesh>
+    <mesh position={[0, 1.5, 0]} castShadow>
+      <sphereGeometry args={[0.32, 16, 14]} />
+      <meshStandardMaterial color="#f8fafc" roughness={0.45} />
+    </mesh>
+    <mesh position={[0, 1.52, 0.14]}>
+      <sphereGeometry args={[0.24, 14, 12, 0, Math.PI * 2, 0, Math.PI / 1.8]} />
+      <meshStandardMaterial color="#fbbf24" metalness={0.9} roughness={0.15} />
+    </mesh>
+    <mesh position={[0, 0.85, -0.32]}>
+      <boxGeometry args={[0.42, 0.58, 0.22]} />
+      <meshStandardMaterial color="#22d3ee" />
+    </mesh>
   </group>;
 }
 
