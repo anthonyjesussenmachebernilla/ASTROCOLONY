@@ -99,7 +99,7 @@ export default function GamePage() {
       {isSyncing && <p role="status" className="colony-saving">Guardando tu decisión…</p>}
       {lastError && !decision && !showRescue && <p role="alert" className="colony-message">{lastError}</p>}
 
-      <div className="w-full">
+      <div className="w-full space-y-2.5">
           <ColonyMap
             key={mission.missionId}
             selectedBuilding={selectedBuilding}
@@ -113,6 +113,27 @@ export default function GamePage() {
             onAdvance={() => requestDecision('advance')}
             onRescue={() => { clearError(); setShowRescue(true); }}
           />
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/15 bg-[rgba(17,19,20,0.65)] px-3.5 py-2.5 text-xs text-[#ede7df] backdrop-blur-md">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="inline-flex items-center gap-1.5">
+                <kbd className="inline-flex h-5 min-w-[22px] items-center justify-center rounded border border-[#eee2d5]/70 bg-[#262626] px-1.5 text-[10px] font-bold text-white">W A S D</kbd>
+                <span>Mover astronauta</span>
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <kbd className="inline-flex h-5 min-w-[22px] items-center justify-center rounded border border-[#eee2d5]/70 bg-[#262626] px-1.5 text-[10px] font-bold text-white">Mouse</kbd>
+                <span>Mirar / Cámara</span>
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <kbd className="inline-flex h-5 min-w-[22px] items-center justify-center rounded border border-[#eee2d5]/70 bg-[#262626] px-1.5 text-[10px] font-bold text-white">E</kbd>
+                <span>Entrar al módulo</span>
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <kbd className="inline-flex h-5 min-w-[22px] items-center justify-center rounded border border-[#eee2d5]/70 bg-[#262626] px-1.5 text-[10px] font-bold text-white">V</kbd>
+                <span>Cambiar vista</span>
+              </span>
+            </div>
+            <span className="text-[11px] font-semibold text-[#ffd27a]">Haz clic en la colonia para explorar</span>
+          </div>
       </div>
 
       {decision && <DecisionReview decision={decision} mission={mission} busy={isSyncing} error={lastError} onConfirm={() => void confirmDecision()} onClose={() => setDecision(null)} />}

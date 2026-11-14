@@ -73,28 +73,47 @@ export default function HomePage() {
     }
   };
 
-  return <main className="flex-1 bg-[#080b15]">
-    <section className="relative isolate flex min-h-[760px] flex-col items-center overflow-hidden bg-[#1b1c2c] px-5 pb-10 pt-20 text-center sm:min-h-[820px] sm:pt-24 lg:min-h-[min(900px,100svh)]">
-      <div className="absolute inset-0 -z-20 bg-cover bg-[position:43%_center] sm:bg-center" style={{ backgroundImage: "url('/astrocolony-home-hero.webp')" }} aria-hidden="true" />
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-[#080d22]/65 via-[#111323]/25 to-[#090d17]/80 sm:from-[#080d22]/35 sm:via-transparent sm:to-[#090d17]/70" aria-hidden="true" />
+  return <main className="flex-1 bg-[#0b0e14] text-[#f8f7f0]">
+    <section className="relative isolate flex min-h-[760px] flex-col justify-between overflow-hidden bg-[#15181b] px-6 pb-10 pt-16 sm:min-h-[820px] sm:px-12 sm:pt-20 lg:min-h-[min(900px,100svh)] lg:px-20">
+      <div className="absolute -inset-3 -z-20 scale-[1.03] bg-cover bg-[position:55%_center] blur-[1.5px] brightness-[0.72]" style={{ backgroundImage: "url('/astrocolony-home-hero.webp')" }} aria-hidden="true" />
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(95deg,rgba(9,13,19,0.93)_0%,rgba(11,15,20,0.82)_38%,rgba(11,13,18,0.18)_100%)]" aria-hidden="true" />
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_65%_50%,transparent_20%,rgba(4,8,11,0.52)_95%)]" aria-hidden="true" />
 
-      <div className="w-full max-w-4xl">
-        <p className="text-xs font-semibold uppercase tracking-[0.45em] text-orange-100/90 sm:text-sm">Misión de entrenamiento espacial</p>
-        <h1 className="mt-4 font-sans text-[clamp(2.2rem,7vw,6rem)] font-light uppercase tracking-[0.12em] text-white drop-shadow-[0_2px_18px_rgba(0,0,0,0.85)] sm:tracking-[0.24em]">Astro<span className="font-semibold text-orange-200">Colony</span></h1>
-        <div className="mx-auto mt-4 flex max-w-xl items-center gap-4 text-orange-100/90"><span className="h-px flex-1 bg-orange-100/50" /><span className="text-xs font-semibold uppercase tracking-[0.28em] sm:text-sm">Sobrevive en Marte</span><span className="h-px flex-1 bg-orange-100/50" /></div>
-        <p className="mx-auto mt-7 max-w-lg text-sm font-medium leading-relaxed text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] sm:text-base">10 soles. 4 astronautas. Cada decisión puede salvar la colonia.</p>
+      <div className="my-auto w-full max-w-2xl py-4 text-left">
+        <p className="text-[11px] font-bold uppercase tracking-[0.33em] text-[#eab976]">Misión de entrenamiento espacial • NASA</p>
+        <h1 className="mt-4 font-sans text-[clamp(2.6rem,5.8vw,5.4rem)] font-light uppercase tracking-[0.19em] leading-[1.05] text-[#f8f7f0] drop-shadow-[0_8px_22px_rgba(0,0,0,0.95)]">Astro<em className="not-italic font-normal text-[#f4e6d2]">Colony</em></h1>
+        <div className="my-3.5 h-[2px] w-60 bg-gradient-to-r from-transparent via-[#f39b65] to-transparent" aria-hidden="true" />
+        <p className="text-xs font-bold uppercase tracking-[0.4em] text-[#e6d1be]">Sobrevive en Marte</p>
+
+        <div className="mt-10 flex items-center gap-3 text-xs font-extrabold uppercase tracking-[0.24em] text-[#eec994]">
+          <span className="h-px w-6 bg-[#dbab6d]" aria-hidden="true" />
+          <span>Misión Aurora • 10 Soles</span>
+        </div>
+        <p className="mt-3 max-w-xl text-[clamp(1.65rem,3vw,2.75rem)] font-semibold leading-[1.15] tracking-[-0.02em] text-[#f8f7f0]">
+          10 soles. 4 astronautas. Cada decisión puede salvar la colonia.
+        </p>
+        <p className="mt-4 max-w-lg text-[15px] leading-[1.7] text-[#d8d4d0]">
+          Explora la base marciana en 3D, vigila eventos solares reales de la NASA y equilibra energía, oxígeno y radiación junto a ASTROBOT.
+        </p>
+
+        <nav aria-label="Menú principal" className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <button type="button" onClick={() => void beginMission()} disabled={menuBusy} className="group inline-flex min-h-[52px] min-w-[215px] items-center justify-center gap-3 rounded-lg border border-[#ffd49d] bg-[linear-gradient(125deg,#d68b49,#a45831)] px-6 text-sm font-extrabold uppercase tracking-[0.1em] text-[#fff8ee] shadow-[0_6px_28px_rgba(206,104,48,0.28)] transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f8d48d] disabled:cursor-wait disabled:opacity-60"><Play className="h-4 w-4 fill-current" /> {menuBusy ? 'Preparando…' : 'Comenzar'} <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" /></button>
+          <button type="button" onClick={() => void continueMission()} disabled={!hasSavedMission || menuBusy} className="inline-flex min-h-[52px] items-center justify-center gap-2.5 rounded-lg border border-[rgba(255,236,206,0.5)] bg-[rgba(18,23,29,0.55)] px-6 text-sm font-bold text-[#f6ebe0] backdrop-blur-md transition hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f8d48d] disabled:cursor-not-allowed disabled:opacity-50"><FolderOpen className="h-4 w-4" /> Continuar</button>
+          <button type="button" onClick={() => setSettingsOpen(true)} className="inline-flex min-h-[52px] items-center justify-center gap-2.5 rounded-lg border border-[rgba(255,236,206,0.35)] bg-[rgba(18,23,29,0.45)] px-5 text-sm font-bold text-[#f6ebe0] backdrop-blur-md transition hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f8d48d]"><Settings2 className="h-4 w-4" /> Configuración</button>
+        </nav>
+        {!hasSavedMission && <p className="mt-2.5 text-xs text-[#d4d2cb]/85">Continuar se activa cuando tengas una partida guardada.</p>}
+        {menuError && <p role="alert" className="mt-3 max-w-md rounded-xl border border-red-300/50 bg-red-950/80 p-3 text-sm text-white">{menuError}</p>}
+
+        <div className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] tracking-[0.045em] text-[#bbb7b1]">
+          <span>Para exploradores de 7 a 12 años</span>
+          <span className="border-l border-[#92877d] pl-3">Datos reales NASA DONKI</span>
+          <span className="border-l border-[#92877d] pl-3">Colonia 3D interactiva</span>
+        </div>
       </div>
 
-      <nav aria-label="Menú principal" className="mt-8 flex w-full max-w-sm flex-col gap-3 sm:mt-9">
-        <button type="button" onClick={() => void beginMission()} disabled={menuBusy} className="group flex min-h-16 items-center justify-center gap-4 rounded-2xl border-2 border-orange-300/90 bg-orange-500/30 px-6 text-xl font-bold text-white shadow-[0_0_22px_rgba(251,146,60,0.5),inset_0_0_18px_rgba(251,146,60,0.22)] backdrop-blur-md transition hover:scale-[1.02] hover:bg-orange-500/50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white disabled:cursor-wait disabled:opacity-60"><Play className="h-6 w-6 fill-white" /> {menuBusy ? 'Preparando…' : 'Comenzar'} <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" /></button>
-        <button type="button" onClick={() => void continueMission()} disabled={!hasSavedMission || menuBusy} className="flex min-h-14 items-center justify-center gap-3 rounded-2xl border border-white/70 bg-slate-950/35 px-6 text-lg font-semibold text-white backdrop-blur-md transition hover:bg-slate-900/65 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-50"><FolderOpen className="h-5 w-5" /> Continuar</button>
-        {!hasSavedMission && <p className="-mt-2 text-xs text-white/80">Continuar se activa cuando tengas una partida guardada.</p>}
-        <button type="button" onClick={() => setSettingsOpen(true)} className="flex min-h-14 items-center justify-center gap-3 rounded-2xl border border-white/70 bg-slate-950/35 px-6 text-lg font-semibold text-white backdrop-blur-md transition hover:bg-slate-900/65 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"><Settings2 className="h-5 w-5" /> Configuración</button>
-        {menuError && <p role="alert" className="rounded-xl border border-red-300/50 bg-red-950/80 p-3 text-sm text-white">{menuError}</p>}
-      </nav>
-
-      <a href="#reto" className="mt-auto inline-flex items-center gap-2 pt-14 text-sm font-semibold uppercase tracking-[0.22em] text-orange-50/90 hover:text-white">Conoce el reto <ArrowDown className="h-4 w-4" /></a>
-      <div className="absolute bottom-3 right-4 rounded-full border border-white/25 bg-black/35 px-3 py-1 text-xs text-white/80 backdrop-blur">Para exploradores de 7 a 12 años</div>
+      <div className="flex items-center justify-between pt-6">
+        <a href="#reto" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-[#eec994] hover:text-white">Conoce el reto <ArrowDown className="h-4 w-4" /></a>
+      </div>
     </section>
 
     {settingsOpen && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSettingsOpen(false); }}><section role="dialog" aria-modal="true" aria-labelledby="settings-title" className="w-full max-w-md rounded-3xl border border-orange-300/50 bg-[#151d2d] p-6 shadow-2xl"><div className="flex items-center justify-between"><h2 id="settings-title" className="text-xl font-bold text-white">Configuración</h2><button type="button" aria-label="Cerrar configuración" onClick={() => setSettingsOpen(false)} className="rounded-lg p-2 text-slate-200 hover:bg-slate-700"><X className="h-5 w-5" /></button></div><label className="mt-5 flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-slate-600 p-4 text-sm text-white"><span><strong>Reducir movimiento</strong><span className="mt-1 block text-slate-300">Detiene el giro automático y las animaciones de la colonia.</span></span><input type="checkbox" checked={reducedMotion} onChange={toggleReducedMotion} className="h-5 w-5 accent-orange-400" /></label><ExplorerPreferences /></section></div>}

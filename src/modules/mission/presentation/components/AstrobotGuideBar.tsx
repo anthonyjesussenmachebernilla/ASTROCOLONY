@@ -51,11 +51,11 @@ export function AstrobotGuideBar({
   return (
     <section
       aria-label="Guía paso a paso de ASTROBOT"
-      className="relative overflow-hidden rounded-2xl border border-cyan-400/45 bg-gradient-to-r from-[#0F1B35] via-[#132242] to-[#1A1B3B] p-4 shadow-xl"
+      className="relative overflow-hidden rounded-2xl border border-[rgba(104,213,234,0.55)] bg-[linear-gradient(115deg,rgba(10,34,43,0.92),rgba(14,25,32,0.86))] p-4 shadow-[0_0_26px_rgba(67,185,213,0.14),inset_0_0_24px_rgba(60,144,166,0.08)] backdrop-blur-md"
     >
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-start gap-3.5">
-          {/* Mascota Robot SVG amigable */}
+          {/* Mascota Robot estilo Aurora con visor cian brillante */}
           <motion.div
             animate={reducedMotion ? undefined : { y: [0, -4, 0] }}
             transition={
@@ -63,32 +63,14 @@ export function AstrobotGuideBar({
                 ? undefined
                 : { duration: 2.8, repeat: Infinity, ease: 'easeInOut' }
             }
-            className="shrink-0"
+            className="relative flex h-[68px] w-[68px] shrink-0 items-center justify-center"
+            aria-hidden="true"
           >
-            <svg
-              width="58"
-              height="58"
-              viewBox="0 0 64 64"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
-              className="drop-shadow-[0_0_10px_rgba(34,211,238,0.45)]"
-            >
-              {/* Antena */}
-              <line x1="32" y1="6" x2="32" y2="14" stroke="#22D3EE" strokeWidth="3" strokeLinecap="round" />
-              <circle cx="32" cy="5" r="3.5" fill="#F97316" />
-              {/* Cabeza del robot */}
-              <rect x="12" y="14" width="40" height="32" rx="10" fill="#E2E8F0" stroke="#38BDF8" strokeWidth="2.5" />
-              {/* Visor */}
-              <rect x="18" y="21" width="28" height="16" rx="6" fill="#0F172A" />
-              {/* Ojos brillantes */}
-              <circle cx="26" cy="29" r="3" fill="#22D3EE" />
-              <circle cx="38" cy="29" r="3" fill="#22D3EE" />
-              {/* Sonrisa */}
-              <path d="M27 33.5 Q32 36.5 37 33.5" stroke="#38BDF8" strokeWidth="2" strokeLinecap="round" fill="none" />
-              {/* Base / cuello */}
-              <rect x="22" y="47" width="20" height="8" rx="4" fill="#94A3B8" />
-            </svg>
+            <div className="absolute h-[58px] w-[62px] -rotate-3 rounded-[22px] border-[4px] border-[#5e707b] bg-gradient-to-br from-[#e7dccd] to-[#7f95a0] shadow-[0_4px_16px_rgba(0,0,0,0.5)]" />
+            <div className="relative z-10 flex h-[34px] w-[48px] items-center justify-evenly rounded-[13px] bg-[#0d242e] px-1.5 shadow-inner">
+              <span className="h-3 w-3 rounded-full bg-[#8adbe5] shadow-[0_0_10px_#8adbe5]" />
+              <span className="h-3 w-3 rounded-full bg-[#8adbe5] shadow-[0_0_10px_#8adbe5]" />
+            </div>
           </motion.div>
 
           <div className="min-w-0">
