@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { getAstrobotGuidance } from '@/modules/simulation/domain/astrobot';
+import {
+  getAstrobotGuidance,
+  getAstrobotStepGuide,
+} from '@/modules/simulation/domain/astrobot';
 import { resolveSpaceEvent } from '@/modules/simulation/domain/event-resolver';
 import { DEFAULT_SIMULATION_CONFIG } from '@/modules/simulation/domain/resource-rules';
 import {
@@ -221,5 +224,29 @@ describe('AstroColony Simulation Engine (Domain Layer)', () => {
     const guidance = getAstrobotGuidance(state);
     expect(guidance.mood).toBe('alert');
     expect(guidance.title).toContain('electricidad');
+  });
+
+  it('guides the player step-by-step from exploring 3D modules to advancing the sol', () => {
+    const initial = createInitialMissionState({
+      missionId: 'mission-guide',
+      randomSeed: 5,
+    });
+
+    const step1 = getAstrobotStepGuide(initial, false);
+    expect(step1.stepNumber).toBe(1);
+    expect(step1.highlightTarget).toBe('colony');
+
+    const step2 = getAstrobotStepGuide(initial, true);
+    expect(step2.stepNumber).toBe(2);
+    expect(step2.highlightTarget).toBe('actions');
+
+    const afterOne = applyPlayerAction(initial, 'ACTIVATE_GREENHOUSE').state;
+    const step3 = getAstrobotStepGuide(afterOne, true);
+    expect(step3.stepNumber).toBe(3);
+
+    const afterTwo = applyPlayerAction(afterOne, 'REINFORCE_SHIELDING').state;
+    const step4 = getAstrobotStepGuide(afterTwo, true);
+    expect(step4.stepNumber).toBe(4);
+    expect(step4.highlightTarget).toBe('advance');
   });
 });

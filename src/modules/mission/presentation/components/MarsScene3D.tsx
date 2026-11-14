@@ -1,7 +1,6 @@
 'use client';
 
-import { Html, OrbitControls, Stars } from '@react-three/drei';
-import { Canvas, useFrame, type ThreeEvent } from '@react-three/fiber';
+import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import {
   createContext,
   useContext,
@@ -18,6 +17,8 @@ import type {
   ResourceSnapshot,
   SpaceEventType,
 } from '@/modules/simulation/domain/types';
+import { ModuleInterior3D } from './ModuleInterior3D';
+import { SpaceKitModel } from './SpaceKitModel';
 
 /* ----------------------------- utilidades ----------------------------- */
 
@@ -87,12 +88,12 @@ const SKY_FRAGMENT = /* glsl */ `
   }
 `;
 
-const FOG_CALM = new THREE.Color('#c06a40');
-const FOG_STORM = new THREE.Color('#a8662f');
-const SKY_TOP_CALM = new THREE.Color('#14112e');
-const SKY_TOP_STORM = new THREE.Color('#5a3320');
-const SKY_BOTTOM_CALM = new THREE.Color('#e08a55');
-const SKY_BOTTOM_STORM = new THREE.Color('#b8743c');
+const FOG_CALM = new THREE.Color('#987260');
+const FOG_STORM = new THREE.Color('#866451');
+const SKY_TOP_CALM = new THREE.Color('#665c63');
+const SKY_TOP_STORM = new THREE.Color('#695348');
+const SKY_BOTTOM_CALM = new THREE.Color('#b98b70');
+const SKY_BOTTOM_STORM = new THREE.Color('#a27b62');
 
 function Environment({ storm }: { storm: boolean }) {
   const fogRef = useRef<THREE.FogExp2>(null);
@@ -101,8 +102,8 @@ function Environment({ storm }: { storm: boolean }) {
   const stormLevel = useRef(0);
   const uniforms = useMemo(
     () => ({
-      topColor: { value: new THREE.Color('#14112e') },
-      bottomColor: { value: new THREE.Color('#e08a55') },
+      topColor: { value: SKY_TOP_CALM.clone() },
+      bottomColor: { value: SKY_BOTTOM_CALM.clone() },
     }),
     [],
   );
@@ -127,13 +128,13 @@ function Environment({ storm }: { storm: boolean }) {
 
   return (
     <>
-      <fogExp2 ref={fogRef} attach="fog" args={['#c06a40', 0.009]} />
-      <hemisphereLight args={['#ffb48a', '#4a2216', 0.75]} />
+      <fogExp2 ref={fogRef} attach="fog" args={['#987260', 0.009]} />
+      <hemisphereLight args={['#d4b29b', '#483329', 0.55]} />
       <directionalLight
         ref={sunLight}
         position={SUN_POSITION.toArray()}
-        color="#ffe3c0"
-        intensity={2.6}
+        color="#f4d2ad"
+        intensity={2.2}
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
@@ -157,7 +158,6 @@ function Environment({ storm }: { storm: boolean }) {
           fog={false}
         />
       </mesh>
-      <Stars radius={220} depth={60} count={3500} factor={4} saturation={0} fade speed={0.4} />
     </>
   );
 }
@@ -224,14 +224,38 @@ function SkyBodies() {
 /* ------------------------------- terreno ------------------------------ */
 
 function Terrain() {
+  const dustTexture = useMemo(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 512;
+    const context = canvas.getContext('2d');
+    if (!context) return null;
+    const pixels = context.createImageData(512, 512);
+    const random = seeded(94021);
+    for (let index = 0; index < 512 * 512; index++) {
+      const grain = Math.floor(210 + random() * 45);
+      const offset = index * 4;
+      pixels.data[offset] = grain;
+      pixels.data[offset + 1] = grain - 5;
+      pixels.data[offset + 2] = grain - 10;
+      pixels.data[offset + 3] = 255;
+    }
+    context.putImageData(pixels, 0, 0);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(24, 24);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = 8;
+    return texture;
+  }, []);
+  useEffect(() => () => dustTexture?.dispose(), [dustTexture]);
   const geometry = useMemo(() => {
     const g = new THREE.PlaneGeometry(240, 240, 190, 190);
     g.rotateX(-Math.PI / 2);
     const pos = g.attributes.position;
     const colors = new Float32Array(pos.count * 3);
-    const low = new THREE.Color('#7c3520');
-    const mid = new THREE.Color('#b4532a');
-    const high = new THREE.Color('#da8d58');
+    const low = new THREE.Color('#704b3d');
+    const mid = new THREE.Color('#9b6a50');
+    const high = new THREE.Color('#bf8a69');
     const c = new THREE.Color();
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i);
@@ -252,7 +276,7 @@ function Terrain() {
 
   return (
     <mesh geometry={geometry} receiveShadow raycast={noRaycast}>
-      <meshStandardMaterial vertexColors flatShading roughness={1} metalness={0} />
+      <meshStandardMaterial vertexColors map={dustTexture} bumpMap={dustTexture} bumpScale={0.055} roughness={1} metalness={0} />
     </mesh>
   );
 }
@@ -357,13 +381,6 @@ function Interactive({ id, selected, onSelect, ringRadius, children }: Interacti
           <ringGeometry args={[ringRadius, ringRadius + 0.35, 56]} />
           <meshBasicMaterial color={selected ? '#22d3ee' : '#fde68a'} transparent opacity={0.9} />
         </mesh>
-      )}
-      {(selected || hover) && (
-        <Html center position={[0, layout.labelY, 0]} style={{ pointerEvents: 'none' }} zIndexRange={[20, 0]}>
-          <div className="whitespace-nowrap rounded-full border border-cyan-300/60 bg-slate-950/85 px-3 py-1 text-xs font-bold text-cyan-100 shadow-lg">
-            {layout.label}
-          </div>
-        </Html>
       )}
     </group>
   );
@@ -932,7 +949,7 @@ function ShieldBubble({ protection, flaring }: { protection: number; flaring: bo
   const motion = useMotion();
   useFrame(({ clock }) => {
     if (!material.current) return;
-    const base = 0.035 + (protection / 100) * 0.13;
+    const base = 0.015 + (protection / 100) * 0.035;
     const flash = flaring ? (motion ? 0.16 + 0.1 * Math.sin(clock.elapsedTime * 4) : 0.2) : 0;
     material.current.opacity = base + flash;
     material.current.color.set(flaring ? '#c084fc' : protection < 35 ? '#f87171' : '#38bdf8');
@@ -947,45 +964,109 @@ function ShieldBubble({ protection, flaring }: { protection: number; flaring: bo
 
 /* ------------------------------- cámara -------------------------------- */
 
-function CameraRig({
-  selectedBuilding,
-  autoRotate,
-  onUserInteract,
+function ExplorerController({
+  firstPerson,
+  reducedMotion,
+  onNearbyChange,
+  onEnterBuilding,
 }: {
-  selectedBuilding: BuildingId | null;
-  autoRotate: boolean;
-  onUserInteract: () => void;
+  firstPerson: boolean;
+  reducedMotion: boolean;
+  onNearbyChange: (id: BuildingId | null) => void;
+  onEnterBuilding: (id: BuildingId) => void;
 }) {
-  const controls = useRef<React.ElementRef<typeof OrbitControls>>(null);
-  const target = useMemo(() => new THREE.Vector3(0, 2, 0), []);
+  const { camera, gl } = useThree();
+  const astronaut = useRef<THREE.Group>(null);
+  const position = useRef(new THREE.Vector3(0, 0, 26));
+  const yaw = useRef(0);
+  const pitch = useRef(-0.08);
+  const keys = useRef(new Set<string>());
+  const nearby = useRef<BuildingId | null>(null);
+  const dragging = useRef(false);
+  const target = useMemo(() => new THREE.Vector3(), []);
+  const direction = useMemo(() => new THREE.Vector3(), []);
 
   useEffect(() => {
-    const p = selectedBuilding ? BUILDING_LAYOUT[selectedBuilding].position : [0, 0, 0];
-    target.set(p[0] * 0.55, 2, p[2] * 0.55);
-  }, [selectedBuilding, target]);
+    const isTyping = (event: KeyboardEvent) => event.target instanceof HTMLElement && Boolean(event.target.closest('input, textarea, select, [contenteditable]'));
+    const keyDown = (event: KeyboardEvent) => {
+      if (isTyping(event)) return;
+      const key = event.key.toLowerCase();
+      if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'shift'].includes(key)) {
+        keys.current.add(key);
+        if (key.startsWith('arrow')) event.preventDefault();
+      }
+      if (key === 'e' && !event.repeat && nearby.current) onEnterBuilding(nearby.current);
+    };
+    const keyUp = (event: KeyboardEvent) => keys.current.delete(event.key.toLowerCase());
+    const blur = () => keys.current.clear();
+    window.addEventListener('keydown', keyDown);
+    window.addEventListener('keyup', keyUp);
+    window.addEventListener('blur', blur);
+    return () => {
+      window.removeEventListener('keydown', keyDown);
+      window.removeEventListener('keyup', keyUp);
+      window.removeEventListener('blur', blur);
+    };
+  }, [onEnterBuilding]);
 
-  useFrame((_, dt) => {
-    if (!controls.current) return;
-    controls.current.target.lerp(target, 1 - Math.exp(-3 * dt));
-    controls.current.update();
+  useEffect(() => {
+    const element = gl.domElement;
+    const down = (event: PointerEvent) => { dragging.current = true; element.setPointerCapture(event.pointerId); };
+    const up = () => { dragging.current = false; };
+    const move = (event: PointerEvent) => {
+      if (!dragging.current) return;
+      yaw.current -= event.movementX * 0.005;
+      pitch.current = THREE.MathUtils.clamp(pitch.current - event.movementY * 0.003, -0.55, 0.45);
+    };
+    element.addEventListener('pointerdown', down);
+    element.addEventListener('pointerup', up);
+    element.addEventListener('pointercancel', up);
+    element.addEventListener('pointermove', move);
+    return () => {
+      element.removeEventListener('pointerdown', down);
+      element.removeEventListener('pointerup', up);
+      element.removeEventListener('pointercancel', up);
+      element.removeEventListener('pointermove', move);
+    };
+  }, [gl]);
+
+  useFrame((_, rawDelta) => {
+    const delta = Math.min(rawDelta, 0.05);
+    const x = Number(keys.current.has('d') || keys.current.has('arrowright')) - Number(keys.current.has('a') || keys.current.has('arrowleft'));
+    const z = Number(keys.current.has('s') || keys.current.has('arrowdown')) - Number(keys.current.has('w') || keys.current.has('arrowup'));
+    if (x || z) {
+      direction.set(x, 0, z).normalize().applyAxisAngle(THREE.Object3D.DEFAULT_UP, yaw.current);
+      const speed = keys.current.has('shift') ? 8 : 4.8;
+      position.current.addScaledVector(direction, delta * speed);
+      position.current.x = THREE.MathUtils.clamp(position.current.x, -36, 36);
+      position.current.z = THREE.MathUtils.clamp(position.current.z, -36, 36);
+      if (astronaut.current) astronaut.current.rotation.y = Math.atan2(-direction.x, -direction.z);
+    }
+    position.current.y = heightAt(position.current.x, position.current.z);
+    if (astronaut.current) astronaut.current.position.copy(position.current);
+
+    let closest: BuildingId | null = null;
+    let closestDistance = Infinity;
+    for (const [id, layout] of Object.entries(BUILDING_LAYOUT) as [BuildingId, typeof BUILDING_LAYOUT[BuildingId]][]) {
+      const distance = Math.hypot(position.current.x - layout.position[0], position.current.z - layout.position[2]);
+      const radius = id === 'HABITAT' ? 8.5 : id === 'SOLAR_PANELS' ? 6.5 : 5;
+      if (distance < radius && distance < closestDistance) { closest = id; closestDistance = distance; }
+    }
+    if (closest !== nearby.current) { nearby.current = closest; onNearbyChange(closest); }
+
+    const eye = firstPerson ? 1.7 : 1.45;
+    target.set(position.current.x, position.current.y + eye, position.current.z);
+    const look = new THREE.Vector3(-Math.sin(yaw.current) * Math.cos(pitch.current), Math.sin(pitch.current), -Math.cos(yaw.current) * Math.cos(pitch.current));
+    const desired = firstPerson
+      ? target.clone()
+      : target.clone().addScaledVector(look, -9).add(new THREE.Vector3(0, 3.4, 0));
+    camera.position.lerp(desired, reducedMotion ? 1 : 1 - Math.exp(-9 * delta));
+    camera.lookAt(target.clone().addScaledVector(look, 8));
   });
 
-  return (
-    <OrbitControls
-      ref={controls}
-      makeDefault
-      enablePan={false}
-      enableDamping
-      dampingFactor={0.08}
-      minDistance={14}
-      maxDistance={52}
-      maxPolarAngle={Math.PI / 2.15}
-      minPolarAngle={0.25}
-      autoRotate={autoRotate}
-      autoRotateSpeed={0.45}
-      onStart={onUserInteract}
-    />
-  );
+  return <group ref={astronaut} visible={!firstPerson} position={[0, 0, 26]}>
+    <SpaceKitModel name="astronaut" scale={0.8} />
+  </group>;
 }
 
 /* -------------------------------- escena ------------------------------- */
@@ -997,6 +1078,11 @@ export interface MarsScene3DProps {
   onSelectBuilding: (id: BuildingId) => void;
   reducedMotion: boolean;
   weatherLevel: SpaceWeatherLevel;
+  interiorBuilding: BuildingId | null;
+  onEnterBuilding: (id: BuildingId) => void;
+  onInspect: (message: string) => void;
+  firstPerson: boolean;
+  onNearbyChange: (id: BuildingId | null) => void;
 }
 
 function detectWebGL(): boolean {
@@ -1015,9 +1101,13 @@ export default function MarsScene3D({
   onSelectBuilding,
   reducedMotion,
   weatherLevel,
+  interiorBuilding,
+  onEnterBuilding,
+  onInspect,
+  firstPerson,
+  onNearbyChange,
 }: MarsScene3DProps) {
   const [webgl] = useState(detectWebGL);
-  const [userInteracted, setUserInteracted] = useState(false);
   const storm = activeEventType === 'DUST_STORM';
   const flaring = activeEventType === 'SOLAR_EVENT';
   const animate = !reducedMotion;
@@ -1030,17 +1120,23 @@ export default function MarsScene3D({
     );
   }
 
-  const select = (id: BuildingId) => onSelectBuilding(id);
+  const select = (id: BuildingId) => {
+    onSelectBuilding(id);
+    onEnterBuilding(id);
+  };
 
   return (
     <MotionContext.Provider value={animate}>
       <Canvas
-        shadows
+        shadows="basic"
         dpr={[1, 1.75]}
-        camera={{ position: [26, 15, 28], fov: 45, near: 0.5, far: 700 }}
+        camera={{ position: [0, 6, 35], fov: 62, near: 0.25, far: 700 }}
         gl={{ antialias: true, powerPreference: 'high-performance' }}
         aria-label="Colonia marciana en 3D. Haz clic en un módulo para seleccionarlo."
       >
+        {interiorBuilding ? (
+          <ModuleInterior3D building={interiorBuilding} resources={resources} onInspect={onInspect} reducedMotion={reducedMotion} />
+        ) : <>
         <Environment storm={storm} />
         <Sun level={weatherLevel} flaring={flaring} />
         <SkyBodies />
@@ -1079,11 +1175,8 @@ export default function MarsScene3D({
         <DustStorm active={storm} />
         <SolarParticles active={flaring} />
 
-        <CameraRig
-          selectedBuilding={selectedBuilding}
-          autoRotate={animate && !userInteracted}
-          onUserInteract={() => setUserInteracted(true)}
-        />
+        <ExplorerController firstPerson={firstPerson} reducedMotion={reducedMotion} onNearbyChange={onNearbyChange} onEnterBuilding={onEnterBuilding} />
+        </>}
       </Canvas>
     </MotionContext.Provider>
   );

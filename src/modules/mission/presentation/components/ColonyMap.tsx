@@ -1,6 +1,8 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import {
+  ArrowLeft,
   Battery,
   FlaskConical,
   Home,
@@ -67,20 +69,45 @@ export function ColonyMap({
   isPersisted,
   onExecuteAction,
 }: ColonyMapProps) {
+  const [interiorBuilding, setInteriorBuilding] = useState<BuildingId | null>(null);
+  const [firstPerson, setFirstPerson] = useState(false);
+  const [nearbyBuilding, setNearbyBuilding] = useState<BuildingId | null>(null);
+  useEffect(() => {
+    const toggleView = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() === 'v' && !(event.target instanceof HTMLElement && event.target.closest('input, textarea, select, [contenteditable]'))) {
+        setFirstPerson((value) => !value);
+      }
+    };
+    window.addEventListener('keydown', toggleView);
+    return () => window.removeEventListener('keydown', toggleView);
+  }, []);
+  const [inspectedEquipment, setInspectedEquipment] = useState('Toca un equipo para descubrir qué hace.');
+  const enterBuilding = (id: BuildingId) => {
+    onSelectBuilding(id);
+    setInteriorBuilding(id);
+    setInspectedEquipment('Toca un equipo para descubrir qué hace.');
+  };
   const weather = useSpaceWeather();
   const resources = mission.resources;
   const selectedMeta =
-    BUILDINGS.find((b) => b.id === selectedBuilding) ?? BUILDINGS[0];
+    BUILDINGS.find((b) => b.id === (interiorBuilding ?? selectedBuilding)) ?? BUILDINGS[0];
   const moduleActions = Object.values(DEFAULT_SIMULATION_CONFIG.actions).filter(
     (a) => a.buildingId === selectedMeta.id,
   );
   const level = weather?.level ?? 'CALM';
   const isDustStorm = activeEvent?.type === 'DUST_STORM';
   const isSolarEvent = activeEvent?.type === 'SOLAR_EVENT';
+  const chapter = mission.currentTurn <= 3
+    ? { number: '01', title: 'El primer amanecer', objective: 'Entra al hábitat y conoce la base.', target: 'HABITAT' as BuildingId }
+    : mission.currentTurn <= 7
+      ? { number: '02', title: 'Mantener la vida', objective: 'Inspecciona el aire y prepara los suministros.', target: 'OXYGEN_GENERATOR' as BuildingId }
+      : { number: '03', title: 'La última señal', objective: 'Revisa la antena antes de terminar la misión.', target: 'COMMS_ANTENNA' as BuildingId };
+  const nearbyMeta = BUILDINGS.find((building) => building.id === nearbyBuilding);
+  const move = (key: string, down: boolean) => window.dispatchEvent(new KeyboardEvent(down ? 'keydown' : 'keyup', { key, bubbles: true }));
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-orange-500/40 bg-[#1B1222] shadow-2xl">
-      <div className="relative h-[340px] w-full sm:h-[440px] lg:h-[500px]">
+    <section className="relative overflow-hidden rounded-xl border border-stone-500/40 bg-[#201b1a] shadow-2xl">
+      <div className="relative h-[calc(100dvh-110px)] min-h-[500px] w-full">
         <ColonyScene3D
           resources={resources}
           activeEventType={activeEvent?.type ?? null}
@@ -88,10 +115,61 @@ export function ColonyMap({
           onSelectBuilding={onSelectBuilding}
           reducedMotion={reducedMotion}
           weatherLevel={level}
+          interiorBuilding={interiorBuilding}
+          onEnterBuilding={enterBuilding}
+          onInspect={setInspectedEquipment}
+          firstPerson={firstPerson}
+          onNearbyChange={setNearbyBuilding}
         />
 
+        {!interiorBuilding && <div className="absolute left-3 top-3 z-20 max-w-[calc(100%-1.5rem)] rounded-xl border border-orange-200/30 bg-[#171923]/85 px-4 py-3 text-white shadow-xl backdrop-blur-sm sm:max-w-sm">
+          <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-orange-200">Capítulo {chapter.number} · Sol {mission.currentTurn}</p>
+          <p className="mt-1 text-lg font-bold leading-tight">{chapter.title}</p>
+          <p className="mt-1 text-sm text-white/85">{chapter.objective}</p>
+          <button type="button" onClick={() => enterBuilding(chapter.target)} className="mt-2 text-xs font-bold text-orange-200 underline underline-offset-4 hover:text-white">Ir al objetivo</button>
+        </div>}
+
+        {!interiorBuilding && <div className="absolute right-3 top-3 z-20 hidden items-center gap-3 rounded-lg border border-amber-100/20 bg-[#241a16]/80 px-4 py-2 text-xs font-semibold text-white shadow-lg backdrop-blur-md lg:flex">
+          <span className="flex items-center gap-1.5"><Sun className="h-4 w-4 text-amber-300" /> Energía {resources.energy}%</span>
+          <span className="flex items-center gap-1.5"><Wind className="h-4 w-4 text-sky-300" /> Oxígeno {resources.oxygen}%</span>
+          <span className="flex items-center gap-1.5"><Sprout className="h-4 w-4 text-emerald-300" /> Alimentos {resources.food}%</span>
+          <span className="flex items-center gap-1.5"><Shield className="h-4 w-4 text-violet-300" /> Blindaje {resources.radiationProtection}%</span>
+          <strong className="border-l border-white/25 pl-3 text-amber-200">Sol {mission.currentTurn}</strong>
+        </div>}
+
+        {!interiorBuilding && <div className="absolute right-3 top-36 z-20 flex flex-col gap-2 lg:top-16">
+          <button type="button" onClick={() => setFirstPerson((value) => !value)} className="rounded-lg border border-white/40 bg-slate-950/85 px-3 py-2 text-xs font-bold text-white backdrop-blur hover:bg-slate-800">{firstPerson ? 'Primera persona' : 'Tercera persona'} <span className="hidden sm:inline">· V</span></button>
+        </div>}
+
+        {!interiorBuilding && nearbyMeta && <div className="absolute bottom-16 left-1/2 z-20 w-max max-w-[90%] -translate-x-1/2 rounded-xl border border-orange-300/70 bg-slate-950/90 px-4 py-2 text-center text-sm font-semibold text-white shadow-xl">
+          <span className="mr-2">{nearbyMeta.name}</span>
+          <button type="button" onClick={() => enterBuilding(nearbyMeta.id)} className="rounded-md bg-orange-500 px-3 py-1 text-slate-950 hover:bg-orange-400">Entrar · E</button>
+        </div>}
+
+        {!interiorBuilding && firstPerson && <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 z-10 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/80 bg-white/30 shadow-[0_0_10px_white]" />}
+
+        {!interiorBuilding && <div className="absolute bottom-3 right-3 z-20 hidden max-w-xs rounded-lg border border-sky-300/35 bg-[#13202a]/85 p-3 text-white shadow-xl backdrop-blur-md md:block">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-sky-300">Astrobot · Asistente</p>
+          <p className="mt-1 text-sm leading-snug">{resources.energy < 35 ? 'La energía está baja. Inspecciona los paneles solares y las baterías.' : isSolarEvent ? 'Hay actividad solar. Revisa el blindaje antes de avanzar.' : 'Explora la colonia. Cada módulo te ayudará a cuidar a la tripulación.'}</p>
+        </div>}
+
+        {!interiorBuilding && <div className="absolute bottom-3 left-3 z-20 grid grid-cols-3 gap-1 sm:hidden" aria-label="Controles de movimiento">
+          <span />
+          <button type="button" onPointerDown={() => move('w', true)} onPointerUp={() => move('w', false)} onPointerCancel={() => move('w', false)} className="h-10 w-10 rounded-lg bg-slate-950/80 text-white">↑</button>
+          <span />
+          <button type="button" onPointerDown={() => move('a', true)} onPointerUp={() => move('a', false)} onPointerCancel={() => move('a', false)} className="h-10 w-10 rounded-lg bg-slate-950/80 text-white">←</button>
+          <button type="button" onPointerDown={() => move('s', true)} onPointerUp={() => move('s', false)} onPointerCancel={() => move('s', false)} className="h-10 w-10 rounded-lg bg-slate-950/80 text-white">↓</button>
+          <button type="button" onPointerDown={() => move('d', true)} onPointerUp={() => move('d', false)} onPointerCancel={() => move('d', false)} className="h-10 w-10 rounded-lg bg-slate-950/80 text-white">→</button>
+        </div>}
+
+        {interiorBuilding && <div className="absolute left-3 top-3 z-20 flex max-w-[calc(100%-1.5rem)] flex-wrap items-center gap-2">
+          <button type="button" onClick={() => setInteriorBuilding(null)} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-cyan-300/70 bg-slate-950/90 px-4 py-2 text-sm font-bold text-white shadow-lg hover:bg-slate-800"><ArrowLeft className="h-4 w-4" /> Volver a la colonia</button>
+          <span className="rounded-xl border border-white/30 bg-slate-950/80 px-3 py-2 text-sm font-semibold text-cyan-100">Dentro de: {selectedMeta.name}</span>
+        </div>}
+        {interiorBuilding && <div role="status" aria-live="polite" className="absolute bottom-3 left-3 right-3 z-20 rounded-xl border border-cyan-300/50 bg-slate-950/90 px-4 py-3 text-sm font-medium text-white shadow-lg sm:right-auto sm:max-w-md">{inspectedEquipment}</div>}
+
         {/* HUD sobre la escena */}
-        <div className="pointer-events-none absolute left-3 top-3 z-10 flex max-w-[calc(100%-1.5rem)] flex-wrap items-center gap-2">
+        {!interiorBuilding && <div className="pointer-events-none absolute left-3 top-36 z-10 hidden max-w-[calc(100%-1.5rem)] flex-wrap items-center gap-2 lg:flex">
           <span className="rounded-lg border border-orange-400/40 bg-slate-950/75 px-2.5 py-1 font-mono text-[11px] text-orange-200 backdrop-blur">
             Cráter Jezero • Marte: ~−63 °C y 610 Pa de promedio
           </span>
@@ -108,24 +186,26 @@ export function ColonyMap({
                 })`
               : 'Consultando clima solar NASA…'}
           </span>
-        </div>
+        </div>}
 
-        {isDustStorm && (
+        {!interiorBuilding && isDustStorm && (
           <div className="pointer-events-none absolute bottom-3 left-3 right-3 z-10 rounded-xl border border-amber-400/60 bg-amber-950/80 px-3 py-2 text-xs font-semibold text-amber-100 backdrop-blur">
             Tormenta de polvo: los paneles solares producen menos energía.
           </div>
         )}
-        {isSolarEvent && (
+        {!interiorBuilding && isSolarEvent && (
           <div className="pointer-events-none absolute bottom-3 left-3 right-3 z-10 rounded-xl border border-purple-400/60 bg-purple-950/80 px-3 py-2 text-xs font-semibold text-purple-100 backdrop-blur">
             Tormenta solar: tu blindaje (burbuja) está absorbiendo radiación.
           </div>
         )}
-        <p className="pointer-events-none absolute bottom-2 right-3 z-10 hidden text-[10px] text-white/70 sm:block">
-          Arrastra para girar • Rueda para acercar • Clic en un módulo
+        <p className="pointer-events-none absolute bottom-2 left-1/2 z-10 hidden -translate-x-1/2 text-xs text-white/80 lg:block">
+          {interiorBuilding ? 'Arrastra para mirar · Toca los equipos' : 'WASD: caminar · Arrastra: mirar · E: entrar · V: cámara'}
         </p>
       </div>
 
-      <div className="bg-[#0D152B]/95 p-4">
+      <details className="bg-[#201b1a]/95 text-white">
+        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-amber-100 hover:bg-white/5">Mapa y acciones de los módulos</summary>
+      <div className="p-4">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {BUILDINGS.map((building) => {
             const Icon = building.icon;
@@ -134,7 +214,7 @@ export function ColonyMap({
               <button
                 key={building.id}
                 type="button"
-                onClick={() => onSelectBuilding(building.id)}
+                onClick={() => enterBuilding(building.id)}
                 aria-pressed={isSelected}
                 className={`flex cursor-pointer items-center gap-2 rounded-xl border p-2.5 text-left transition-colors ${
                   isSelected
@@ -143,8 +223,8 @@ export function ColonyMap({
                 }`}
               >
                 <Icon className="h-4 w-4 shrink-0 text-cyan-300" />
-                <span className="truncate text-xs font-bold leading-tight">
-                  {building.name}
+                <span className="text-sm font-bold leading-tight">
+                  Entrar: {building.name}
                 </span>
               </button>
             );
@@ -153,7 +233,7 @@ export function ColonyMap({
 
         <div className="mt-3 rounded-xl border border-cyan-500/30 bg-slate-950/75 p-3">
           <p className="text-xs font-semibold uppercase tracking-wider text-cyan-300">
-            Módulo seleccionado: {selectedMeta.name}
+            {interiorBuilding ? 'Estás dentro de' : 'Módulo seleccionado'}: {selectedMeta.name}
           </p>
           <p className="mt-0.5 text-sm text-slate-200">{selectedMeta.role}</p>
 
@@ -191,6 +271,7 @@ export function ColonyMap({
           )}
         </div>
       </div>
+      </details>
     </section>
   );
 }

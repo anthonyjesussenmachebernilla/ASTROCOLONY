@@ -14,7 +14,9 @@ import type {
   ResourceSnapshot,
 } from '@/modules/simulation/domain/types';
 
-const ACTIVE_MISSION_STORAGE_KEY = 'astrocolony_active_mission_id';
+export const ACTIVE_MISSION_STORAGE_KEY = 'astrocolony_active_mission_id';
+export const MISSION_CHANGED_EVENT = 'astrocolony:mission-changed';
+const REDUCED_MOTION_STORAGE_KEY = 'astrocolony_reduced_motion';
 
 interface GameStoreState {
   mission: MissionSimulationState;
@@ -34,6 +36,7 @@ interface GameStoreState {
   executeAction: (actionType: ActionType) => Promise<void>;
   nextTurn: () => Promise<void>;
   toggleReducedMotion: () => void;
+  loadPreferences: () => void;
   clearError: () => void;
 }
 
@@ -49,6 +52,7 @@ function applyDto(
 ): Partial<GameStoreState> {
   if (typeof window !== 'undefined') {
     window.localStorage.setItem(ACTIVE_MISSION_STORAGE_KEY, dto.mission.missionId);
+    window.dispatchEvent(new Event(MISSION_CHANGED_EVENT));
   }
   return {
     mission: dto.mission,
@@ -116,8 +120,11 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
           );
           return;
         }
+        set({ isSyncing: false, lastError: 'No se pudo recuperar la partida guardada. Vuelve al inicio para comenzar otra misión.' });
+        return;
       } catch {
-        // Si falla la recuperación, iniciamos una nueva misión
+        set({ isSyncing: false, lastError: 'No se pudo conectar para recuperar la partida guardada.' });
+        return;
       }
     }
 
@@ -125,7 +132,7 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   },
 
   startNewMission: async (seed) => {
-    set({ isSyncing: true, lastError: null });
+    set({ isSyncing: true, isPersisted: false, lastError: null });
     try {
       const res = await fetch('/api/missions', {
         method: 'POST',
@@ -221,7 +228,17 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   },
 
   toggleReducedMotion: () => {
-    set((state) => ({ reducedMotion: !state.reducedMotion }));
+    const nextValue = !get().reducedMotion;
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(REDUCED_MOTION_STORAGE_KEY, String(nextValue));
+    }
+    set({ reducedMotion: nextValue });
+  },
+
+  loadPreferences: () => {
+    if (typeof window !== 'undefined') {
+      set({ reducedMotion: window.localStorage.getItem(REDUCED_MOTION_STORAGE_KEY) === 'true' });
+    }
   },
 
   clearError: () => set({ lastError: null }),

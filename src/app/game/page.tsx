@@ -1,14 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect } from 'react';
-import { ArrowLeft, Award, Eye, RotateCcw } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ArrowLeft, Award, Eye, PanelTop, RotateCcw } from 'lucide-react';
 import { ActionDeck } from '@/modules/mission/presentation/components/ActionDeck';
+import { AstrobotGuideBar } from '@/modules/mission/presentation/components/AstrobotGuideBar';
 import { AstrobotPanel } from '@/modules/mission/presentation/components/AstrobotPanel';
 import { ColonyMap } from '@/modules/mission/presentation/components/ColonyMap';
-import { ResourceBar } from '@/modules/mission/presentation/components/ResourceBar';
 import { NasaEventsPanel } from '@/modules/nasa/presentation/NasaEventsPanel';
 import { NasaGalleryPanel } from '@/modules/nasa/presentation/NasaGalleryPanel';
+import { getAstrobotStepGuide } from '@/modules/simulation/domain/astrobot';
+import type { BuildingId } from '@/modules/simulation/domain/types';
 import { useGameStore } from '@/stores/game.store';
 
 export default function GamePage() {
@@ -27,17 +29,40 @@ export default function GamePage() {
     nextTurn,
     startNewMission,
     toggleReducedMotion,
+    loadPreferences,
     clearError,
   } = useGameStore();
 
-  useEffect(() => {
-    void hydrateOrStartMission();
-  }, [hydrateOrStartMission]);
+  const [hasInspectedModule, setHasInspectedModule] = useState(false);
+  const [showBasePanel, setShowBasePanel] = useState(false);
 
+  useEffect(() => {
+    loadPreferences();
+    void hydrateOrStartMission();
+  }, [hydrateOrStartMission, loadPreferences]);
+
+  useEffect(() => {
+    const handlePanelKey = (event: KeyboardEvent) => {
+      if (event.key === 'Tab' && (event.target === document.body || event.target instanceof HTMLCanvasElement)) {
+        event.preventDefault();
+        setShowBasePanel((value) => !value);
+      }
+      if (event.key === 'Escape') setShowBasePanel(false);
+    };
+    window.addEventListener('keydown', handlePanelKey);
+    return () => window.removeEventListener('keydown', handlePanelKey);
+  }, []);
+
+  const handleSelectBuilding = (buildingId: BuildingId) => {
+    setHasInspectedModule(true);
+    selectBuilding(buildingId);
+  };
+
+  const stepGuide = getAstrobotStepGuide(mission, hasInspectedModule);
   const isFinished = mission.status !== 'IN_PROGRESS';
 
   return (
-    <main className="flex-1 mx-auto w-full max-w-[1600px] px-3 sm:px-6 py-4 sm:py-6 flex flex-col gap-4">
+    <main className="flex-1 mx-auto w-full max-w-[1920px] px-2 sm:px-4 py-2 sm:py-3 flex flex-col gap-3">
       {/* Barra superior de navegación y accesibilidad */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Link
@@ -49,6 +74,7 @@ export default function GamePage() {
         </Link>
 
         <div className="flex items-center gap-2">
+          <button type="button" onClick={() => setShowBasePanel((value) => !value)} aria-expanded={showBasePanel} className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/40 bg-stone-900 px-3 py-2 text-xs font-bold text-amber-100 hover:bg-stone-800"><PanelTop className="h-4 w-4" /> {showBasePanel ? 'Cerrar panel' : 'Panel de base'} <span className="hidden sm:inline">· TAB</span></button>
           <button
             type="button"
             onClick={toggleReducedMotion}
@@ -98,23 +124,12 @@ export default function GamePage() {
         </div>
       )}
 
-      {/* HUD Superior */}
-      <ResourceBar
-        resources={mission.resources}
-        currentTurn={mission.currentTurn}
-        maxTurns={mission.maxTurns}
-        actionsTakenThisTurn={mission.actionsTakenThisTurn}
-        maxActionsPerTurn={mission.maxActionsPerTurn}
-      />
-
       {isSyncing && <p role="status" className="rounded-xl border border-cyan-500/30 bg-cyan-950/30 px-4 py-2 text-sm text-cyan-100">Guardando tu decisión…</p>}
 
-      {/* Colonia + ASTROBOT */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-        <div className="lg:col-span-8">
+      <div className="w-full">
           <ColonyMap
             selectedBuilding={selectedBuilding}
-            onSelectBuilding={selectBuilding}
+            onSelectBuilding={handleSelectBuilding}
             activeEvent={mission.activeEvent}
             reducedMotion={reducedMotion}
             mission={mission}
@@ -122,28 +137,26 @@ export default function GamePage() {
             isPersisted={isPersisted}
             onExecuteAction={executeAction}
           />
+      </div>
+
+      {showBasePanel && <section role="dialog" aria-modal="true" aria-label="Panel de la base" className="fixed inset-2 z-50 overflow-y-auto rounded-2xl border border-stone-500/70 bg-stone-950/95 p-4 shadow-2xl backdrop-blur-lg sm:inset-6">
+        <div className="mb-4 flex items-center justify-between gap-3 border-b border-stone-700 pb-3"><div><p className="text-xs font-bold uppercase tracking-[0.22em] text-amber-300">Aurora-1</p><h2 className="text-xl font-bold text-white">Panel de la base</h2></div><button type="button" onClick={() => setShowBasePanel(false)} className="rounded-lg border border-stone-500 px-4 py-2 text-sm font-bold text-white hover:bg-stone-800">Cerrar · ESC</button></div>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <div className="flex flex-col gap-4 lg:col-span-8">
+          <AstrobotGuideBar guide={stepGuide} reducedMotion={reducedMotion} onFocusBuilding={handleSelectBuilding} />
+          <ActionDeck mission={mission} selectedBuilding={selectedBuilding} lastError={lastError} onExecuteAction={executeAction} onAdvanceTurn={nextTurn} onClearError={clearError} />
         </div>
-        <div className="lg:col-span-4 flex flex-col gap-4">
+        <div className="flex flex-col gap-4 lg:col-span-4">
           <AstrobotPanel
             astrobot={astrobot}
             activeEvent={mission.activeEvent}
             turnSummary={lastTurnSummary}
           />
           <NasaEventsPanel />
+          <NasaGalleryPanel />
         </div>
-      </div>
-
-      {/* Panel de 6 decisiones */}
-      <ActionDeck
-        mission={mission}
-        selectedBuilding={selectedBuilding}
-        lastError={lastError}
-        onExecuteAction={executeAction}
-        onAdvanceTurn={nextTurn}
-        onClearError={clearError}
-      />
-
-      <NasaGalleryPanel />
+        </div>
+      </section>}
     </main>
   );
 }
