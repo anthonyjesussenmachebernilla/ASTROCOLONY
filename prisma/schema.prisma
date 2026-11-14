@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum MissionStatus {
+  IN_PROGRESS
+  VICTORY
+  DEFEAT
+}
+
+model Mission {
+  id            String         @id @default(cuid())
+  sessionId     String
+  status        MissionStatus  @default(IN_PROGRESS)
+  currentTurn   Int            @default(1)
+  maxTurns      Int            @default(10)
+  scenarioId    String
+  randomSeed    Int
+  engineVersion String         @default("1.0.0")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  completedAt   DateTime?
+
+  state         MissionState?
+  actions       MissionAction[]
+  events        MissionEvent[]
+
+  @@index([sessionId])
+  @@index([status])
+}
+
+model MissionState {
+  id                  String   @id @default(cuid())
+  missionId           String   @unique
+  energy              Int
+  oxygen              Int
+  radiationProtection Int
+  food                Int
+  science             Int
+  crewHealth          Int
+  actionsTakenThisTurn Int     @default(0)
+  actionsExecutedIds  Json     @default("[]")
+  deferredEffects     Json     @default("[]")
+  activeEvent         Json?
+  outcomeReason       String?
+  version             Int      @default(1)
+
+  mission             Mission  @relation(fields: [missionId], references: [id], onDelete: Cascade)
+}
+
+model MissionAction {
+  id         String   @id @default(cuid())
+  missionId  String
+  turn       Int
+  actionType String
+  payload    Json
+  result     Json
+  createdAt  DateTime @default(now())
+
+  mission    Mission  @relation(fields: [missionId], references: [id], onDelete: Cascade)
+
+  @@index([missionId, turn])
+}
+
+model SpaceEvent {
+  id          String         @id @default(cuid())
+  externalId  String         @unique
+  eventType   String
+  source      String
+  sourceUrl   String
+  observedAt  DateTime
+  payload     Json
+  retrievedAt DateTime       @default(now())
+
+  missionEvents MissionEvent[]
+
+  @@index([eventType, observedAt])
+}
+
+model MissionEvent {
+  id           String     @id @default(cuid())
+  missionId    String
+  spaceEventId String
+  turn         Int
+  effect       Json
+  createdAt    DateTime   @default(now())
+
+  mission      Mission    @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  spaceEvent   SpaceEvent @relation(fields: [spaceEventId], references: [id], onDelete: Restrict)
+
+  @@index([missionId, turn])
+}
+
+model ScientificSource {
+  id           String   @id @default(cuid())
+  title        String
+  organization String
+  url          String   @unique
+  description  String
+  retrievedAt  DateTime @default(now())
+}

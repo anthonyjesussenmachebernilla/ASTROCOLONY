@@ -1,0 +1,12 @@
+# Ejecutar pruebas unitarias
+npm run test:run
+
+# Verificar tipos TypeScript
+npm run typecheck
+
+# Iniciar el juego en desarrollo (http://localhost:3000)
+npm run dev
+----------------------------------------------------------------
+docker-compose up -d
+
+----------------------------------

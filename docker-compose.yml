@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: astrocolony-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: astrocolony
+      POSTGRES_PASSWORD: astrocolony_dev_password
+      POSTGRES_DB: astrocolony
+    ports:
+      - '5433:5432'
+    volumes:
+      - astrocolony_pgdata:/var/lib/postgresql/data
+
+volumes:
+  astrocolony_pgdata:
