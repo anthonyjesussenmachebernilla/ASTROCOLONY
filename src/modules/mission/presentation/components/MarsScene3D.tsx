@@ -1,5 +1,6 @@
 'use client';
 
+import { OrthographicCamera } from '@react-three/drei';
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import {
   createContext,
@@ -386,7 +387,8 @@ function Interactive({ id, selected, onSelect, ringRadius, children }: Interacti
 
 /* ------------------------------- edificios ---------------------------- */
 
-function Habitat({ crewHealth }: { crewHealth: number }) {
+function Habitat({ crewHealth, energy }: { crewHealth: number; energy: number }) {
+  const brightness = energy < 25 ? 0.12 : 1;
   const lightColor = crewHealth < 40 ? '#f87171' : crewHealth < 70 ? '#fbbf24' : '#fff1cf';
   const trees = useMemo(() => {
     const r = seeded(5);
@@ -430,7 +432,7 @@ function Habitat({ crewHealth }: { crewHealth: number }) {
             </mesh>
             <mesh position={[0.92, 1.05, 0]}>
               <boxGeometry args={[0.04, 0.5, 0.8]} />
-              <meshStandardMaterial color={lightColor} emissive={lightColor} emissiveIntensity={1.6} />
+              <meshStandardMaterial color={lightColor} emissive={lightColor} emissiveIntensity={1.6 * brightness} />
             </mesh>
           </group>
         );
@@ -447,7 +449,7 @@ function Habitat({ crewHealth }: { crewHealth: number }) {
           </mesh>
         </group>
       ))}
-      <pointLight position={[0, 3.5, 0]} color={lightColor} intensity={14} distance={13} />
+      <pointLight position={[0, 3.5, 0]} color={lightColor} intensity={14 * brightness} distance={13} />
 
       {/* Cúpula de cristal y estructura geodésica */}
       <mesh position={[0, 0.5, 0]} raycast={noRaycast}>
@@ -470,8 +472,9 @@ function Habitat({ crewHealth }: { crewHealth: number }) {
   );
 }
 
-function Greenhouse({ food }: { food: number }) {
-  const growth = 0.35 + (food / 100) * 0.65;
+function Greenhouse({ food, energy, powered }: { food: number; energy: number; powered: boolean }) {
+  const illuminated = powered && energy >= 25;
+  const growth = powered ? 0.35 + (food / 100) * 0.65 : 0.15;
   const plants = useMemo(() => {
     const r = seeded(31);
     return Array.from({ length: 12 }, () => {
@@ -489,14 +492,14 @@ function Greenhouse({ food }: { food: number }) {
       {plants.map((p, i) => (
         <mesh key={i} position={[p.x, 0.5 + p.s * growth * 0.5, p.z]} scale={[1, growth * p.s + 0.3, 1]}>
           <sphereGeometry args={[0.38, 10, 8]} />
-          <meshStandardMaterial color="#3fbf6a" emissive="#14803a" emissiveIntensity={0.6} flatShading />
+          <meshStandardMaterial color={illuminated ? '#65d77b' : '#8b965a'} emissive="#14803a" emissiveIntensity={illuminated ? 0.6 : 0} flatShading />
         </mesh>
       ))}
       <mesh position={[0, 0.3, 0]} raycast={noRaycast}>
         <sphereGeometry args={[3, 28, 14, 0, Math.PI * 2, 0, Math.PI / 2]} />
         <meshStandardMaterial color="#c8f5d8" transparent opacity={0.22} depthWrite={false} side={THREE.DoubleSide} />
       </mesh>
-      <pointLight position={[0, 2, 0]} color="#d946ef" intensity={5} distance={7} />
+      <pointLight position={[0, 2, 0]} color="#d946ef" intensity={illuminated ? 9 : 0.3} distance={7} />
       {/* Hitbox invisible para facilitar el clic */}
       <mesh position={[0, 1.4, 0]} visible={false}>
         <cylinderGeometry args={[3.2, 3.2, 3, 12]} />
@@ -848,8 +851,8 @@ function Astronaut({ radius, speed, phase, suit }: { radius: number; speed: numb
   );
 }
 
-function Crew({ crewHealth }: { crewHealth: number }) {
-  const slow = crewHealth < 40 ? 0.5 : 1;
+function Crew({ crewHealth, oxygen }: { crewHealth: number; oxygen: number }) {
+  const slow = oxygen < 30 ? 0 : crewHealth < 40 ? 0.5 : 1;
   const suits = ['#ea6a2a', '#22d3ee', '#a3e635', '#f472b6'];
   return (
     <group>
@@ -964,11 +967,13 @@ function ShieldBubble({ protection, flaring }: { protection: number; flaring: bo
 
 function ExplorerController({
   firstPerson,
+  overview,
   reducedMotion,
   onNearbyChange,
   onEnterBuilding,
 }: {
   firstPerson: boolean;
+  overview: boolean;
   reducedMotion: boolean;
   onNearbyChange: (id: BuildingId | null) => void;
   onEnterBuilding: (id: BuildingId) => void;
@@ -989,7 +994,7 @@ function ExplorerController({
   useEffect(() => {
     const isTyping = (event: KeyboardEvent) => event.target instanceof HTMLElement && Boolean(event.target.closest('input, textarea, select, [contenteditable]'));
     const keyDown = (event: KeyboardEvent) => {
-      if (isTyping(event)) return;
+      if (isTyping(event) || document.querySelector('dialog[open], [aria-modal="true"]')) return;
       const key = event.key.toLowerCase();
       if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'shift'].includes(key)) {
         keys.current.add(key);
@@ -1031,6 +1036,9 @@ function ExplorerController({
   }, [gl]);
 
   useFrame(({ clock }, rawDelta) => {
+    if (document.querySelector('dialog[open], [aria-modal="true"]')) {
+      keys.current.clear(); dragging.current = false; return;
+    }
     const delta = Math.min(rawDelta, 0.05);
     const x = Number(keys.current.has('d') || keys.current.has('arrowright')) - Number(keys.current.has('a') || keys.current.has('arrowleft'));
     const z = Number(keys.current.has('s') || keys.current.has('arrowdown')) - Number(keys.current.has('w') || keys.current.has('arrowup'));
@@ -1061,6 +1069,12 @@ function ExplorerController({
       if (distance < radius && distance < closestDistance) { closest = id; closestDistance = distance; }
     }
     if (closest !== nearby.current) { nearby.current = closest; onNearbyChange(closest); }
+
+    if (overview) {
+      camera.position.set(42, 48, 48);
+      camera.lookAt(0, 0, 0);
+      return;
+    }
 
     const eye = firstPerson ? 1.7 : 1.45;
     target.set(position.current.x, position.current.y + eye, position.current.z);
@@ -1103,6 +1117,7 @@ function ExplorerController({
 /* -------------------------------- escena ------------------------------- */
 
 export interface MarsScene3DProps {
+  greenhousePowered: boolean;
   resources: ResourceSnapshot;
   activeEventType: SpaceEventType | null;
   selectedBuilding: BuildingId | null;
@@ -1113,6 +1128,7 @@ export interface MarsScene3DProps {
   onEnterBuilding: (id: BuildingId) => void;
   onInspect: (message: string) => void;
   firstPerson: boolean;
+  overview: boolean;
   onNearbyChange: (id: BuildingId | null) => void;
 }
 
@@ -1126,6 +1142,7 @@ function detectWebGL(): boolean {
 }
 
 export default function MarsScene3D({
+  greenhousePowered,
   resources,
   activeEventType,
   selectedBuilding,
@@ -1136,6 +1153,7 @@ export default function MarsScene3D({
   onEnterBuilding,
   onInspect,
   firstPerson,
+  overview,
   onNearbyChange,
 }: MarsScene3DProps) {
   const [webgl] = useState(detectWebGL);
@@ -1166,8 +1184,9 @@ export default function MarsScene3D({
         aria-label="Colonia marciana en 3D. Haz clic en un módulo para seleccionarlo."
       >
         {interiorBuilding ? (
-          <ModuleInterior3D building={interiorBuilding} resources={resources} onInspect={onInspect} reducedMotion={reducedMotion} />
+          <ModuleInterior3D building={interiorBuilding} resources={resources} greenhousePowered={greenhousePowered} onInspect={onInspect} reducedMotion={reducedMotion} />
         ) : <>
+        {overview && <OrthographicCamera makeDefault position={[42, 48, 48]} zoom={11} near={0.25} far={700} />}
         <Environment storm={storm} />
         <Sun level={weatherLevel} flaring={flaring} />
         <SkyBodies />
@@ -1176,10 +1195,10 @@ export default function MarsScene3D({
         <Tubes />
 
         <Interactive id="HABITAT" selected={selectedBuilding === 'HABITAT'} onSelect={select} ringRadius={7.2}>
-          <Habitat crewHealth={resources.crewHealth} />
+          <Habitat energy={resources.energy} crewHealth={resources.crewHealth} />
         </Interactive>
         <Interactive id="GREENHOUSE" selected={selectedBuilding === 'GREENHOUSE'} onSelect={select} ringRadius={3.6}>
-          <Greenhouse food={resources.food} />
+          <Greenhouse food={resources.food} energy={resources.energy} powered={greenhousePowered} />
         </Interactive>
         <Interactive id="SCIENCE_LAB" selected={selectedBuilding === 'SCIENCE_LAB'} onSelect={select} ringRadius={3.4}>
           <ScienceLab science={resources.science} />
@@ -1200,13 +1219,13 @@ export default function MarsScene3D({
           <CommsAntenna delaySeconds={6} />
         </Interactive>
 
-        <Crew crewHealth={resources.crewHealth} />
+        <Crew crewHealth={resources.crewHealth} oxygen={resources.oxygen} />
         <Rover />
         <ShieldBubble protection={resources.radiationProtection} flaring={flaring} />
         <DustStorm active={storm} />
         <SolarParticles active={flaring} />
 
-        <ExplorerController firstPerson={firstPerson} reducedMotion={reducedMotion} onNearbyChange={onNearbyChange} onEnterBuilding={onEnterBuilding} />
+        <ExplorerController overview={overview} firstPerson={firstPerson} reducedMotion={reducedMotion} onNearbyChange={onNearbyChange} onEnterBuilding={onEnterBuilding} />
         </>}
       </Canvas>
     </MotionContext.Provider>

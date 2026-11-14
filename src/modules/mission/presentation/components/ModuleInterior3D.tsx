@@ -11,6 +11,7 @@ type Props = {
   resources: ResourceSnapshot;
   onInspect: (message: string) => void;
   reducedMotion: boolean;
+  greenhousePowered?: boolean;
 };
 
 const PALETTE: Record<BuildingId, { accent: string; wall: string; floor: string }> = {
@@ -24,14 +25,15 @@ const PALETTE: Record<BuildingId, { accent: string; wall: string; floor: string 
   COMMS_ANTENNA: { accent: '#76d6ff', wall: '#b6c3cb', floor: '#566b76' },
 };
 
-function Room({ building }: { building: BuildingId }) {
+function Room({ building, energy, greenhousePowered }: { building: BuildingId; energy: number; greenhousePowered: boolean }) {
   const colors = PALETTE[building];
+  const dim = energy < 25 || (building === 'GREENHOUSE' && !greenhousePowered);
   return <group>
     <color attach="background" args={['#8e4e36']} />
-    <ambientLight intensity={1.6} />
+    <ambientLight intensity={dim ? 0.5 : 1.6} />
     <hemisphereLight args={['#fff4de', '#314149', 1.8]} />
     <directionalLight position={[2, 8, 7]} intensity={3.1} castShadow shadow-mapSize={[1024, 1024]} shadow-camera-left={-12} shadow-camera-right={12} shadow-camera-top={12} shadow-camera-bottom={-12} />
-    <pointLight position={[-3, 3.5, 1]} intensity={15} distance={12} color={colors.accent} />
+    <pointLight position={[-3, 3.5, 1]} intensity={dim ? 0.4 : 15} distance={12} color={colors.accent} />
     <mesh position={[0, -0.12, 0]} receiveShadow><boxGeometry args={[12.5, 0.25, 9.5]} /><meshStandardMaterial color={colors.floor} roughness={0.78} metalness={0.15} /></mesh>
     <mesh position={[0, 2.35, -4.75]} receiveShadow><boxGeometry args={[12.5, 4.7, 0.25]} /><meshStandardMaterial color={colors.wall} roughness={0.58} metalness={0.12} /></mesh>
     {[-6.15, 6.15].map((x) => <mesh key={x} position={[x, 2.35, 0]} receiveShadow><boxGeometry args={[0.25, 4.7, 9.5]} /><meshStandardMaterial color={colors.wall} roughness={0.58} metalness={0.12} /></mesh>)}
@@ -84,7 +86,7 @@ function Bed({ x }: { x: number }) {
   </group>;
 }
 
-function InteriorObjects({ building, resources, onInspect }: Omit<Props, 'reducedMotion'>) {
+function InteriorObjects({ building, resources, onInspect, greenhousePowered = true }: Omit<Props, 'reducedMotion'>) {
   switch (building) {
     case 'HABITAT': return <group>
       {[-3.5, -1.1, 1.3, 3.7].map((x) => <Hotspot key={x} onClick={() => onInspect('Cada astronauta necesita aire, energía y descanso para seguir sano.')}><Bed x={x} /></Hotspot>)}
@@ -105,7 +107,7 @@ function InteriorObjects({ building, resources, onInspect }: Omit<Props, 'reduce
       <Hotspot onClick={() => onInspect('El control distribuye electricidad entre aire, cultivos, refugio y ciencia.')}><Console position={[0, 0, 2.4]} color="#f5d379" /></Hotspot>
     </group>;
     case 'GREENHOUSE': return <group>
-      {[-3.6, -1.2, 1.2, 3.6].map((x) => <Hotspot key={x} onClick={() => onInspect(`Comida disponible: ${resources.food}. Las plantas también ayudan con el aire.`)}><group position={[x, 0, -0.5]}><mesh position={[0, 0.37, 0]} castShadow><boxGeometry args={[1.65, 0.75, 3.3]} /><meshStandardMaterial color="#8c6550" /></mesh>{[-0.95, 0, 0.95].map((z) => <Plant key={z} position={[0, 0.65, z]} size={0.8} />)}</group></Hotspot>)}
+      {[-3.6, -1.2, 1.2, 3.6].map((x) => <Hotspot key={x} onClick={() => onInspect(`Comida disponible: ${resources.food}. Las plantas también ayudan con el aire.`)}><group position={[x, 0, -0.5]}><mesh position={[0, 0.37, 0]} castShadow><boxGeometry args={[1.65, 0.75, 3.3]} /><meshStandardMaterial color="#8c6550" /></mesh>{[-0.95, 0, 0.95].map((z) => <Plant key={z} position={[0, 0.65, z]} size={greenhousePowered ? 0.8 + resources.food / 400 : 0.45} />)}</group></Hotspot>)}
       {[-3.6, 0, 3.6].map((x) => <mesh key={x} position={[x, 3.6, -0.5]}><boxGeometry args={[2.8, 0.12, 0.45]} /><meshBasicMaterial color="#f9d8b5" /></mesh>)}
       <Hotspot onClick={() => onInspect('Las lámparas ayudan a cultivar comida, pero consumen energía.')}><Console position={[0, 0, 2.9]} color="#77e6a8" /></Hotspot>
     </group>;
@@ -142,8 +144,8 @@ function InteriorCamera({ building, reducedMotion }: { building: BuildingId; red
 
 export function ModuleInterior3D(props: Props) {
   return <>
-    <Room building={props.building} />
-    <InteriorObjects building={props.building} resources={props.resources} onInspect={props.onInspect} />
+    <Room building={props.building} energy={props.resources.energy} greenhousePowered={props.greenhousePowered ?? true} />
+    <InteriorObjects building={props.building} resources={props.resources} greenhousePowered={props.greenhousePowered} onInspect={props.onInspect} />
     <InteriorCamera building={props.building} reducedMotion={props.reducedMotion} />
   </>;
 }

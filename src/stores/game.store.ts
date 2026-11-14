@@ -35,6 +35,7 @@ interface GameStoreState {
   selectBuilding: (buildingId: BuildingId | null) => void;
   executeAction: (actionType: ActionType) => Promise<void>;
   nextTurn: () => Promise<void>;
+  rescueMission: () => Promise<void>;
   toggleReducedMotion: () => void;
   loadPreferences: () => void;
   clearError: () => void;
@@ -225,6 +226,19 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
         lastError: 'Error de red al avanzar al siguiente sol.',
       });
     }
+  },
+
+  rescueMission: async () => {
+    const { mission, version, isSyncing, isPersisted } = get();
+    if (isSyncing || !isPersisted) return;
+    set({ isSyncing: true, lastError: null });
+    try {
+      const response = await fetch(`/api/missions/${encodeURIComponent(mission.missionId)}/rescue`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ expectedVersion: version }),
+      });
+      if (!response.ok) { set({ isSyncing: false, lastError: await readApiError(response) }); return; }
+      set(applyDto(await response.json() as MissionApiResponseDto));
+    } catch { set({ isSyncing: false, lastError: 'No pudimos enviar el rescate. Revisa la conexión y vuelve a probar.' }); }
   },
 
   toggleReducedMotion: () => {

@@ -64,6 +64,7 @@ export interface SpaceEventRecord {
 }
 
 export interface ActionExecutionRecord {
+  kind?: 'RESCUE';
   turn: number;
   actionType: ActionType;
   title: string;

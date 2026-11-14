@@ -58,6 +58,7 @@ function mapDbToSimulationState(row: {
       title: payload.title ?? a.actionType,
       deltas: payload.deltas ?? {},
       educationalNote: payload.educationalNote ?? '',
+      ...(payload.kind === 'RESCUE' ? { kind: 'RESCUE' as const } : {}),
     };
   });
 
@@ -192,6 +193,7 @@ export class PrismaMissionRepository implements MissionRepository {
           actionsExecutedIds: toJsonValue(state.actionsExecutedIdsThisTurn),
           deferredEffects: toJsonValue(state.deferredEffects),
           outcomeReason: state.outcomeReason,
+          activeEvent: state.activeEvent ? toJsonValue(state.activeEvent) : Prisma.JsonNull,
           version: expectedVersion + 1,
         },
       });
@@ -204,6 +206,7 @@ export class PrismaMissionRepository implements MissionRepository {
         where: { id: state.missionId },
         data: {
           status: state.status,
+          currentTurn: state.currentTurn,
           completedAt: state.status !== 'IN_PROGRESS' ? new Date() : null,
         },
       });

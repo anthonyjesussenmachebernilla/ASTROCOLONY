@@ -2,16 +2,13 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Award, Eye, PanelTop, RotateCcw } from 'lucide-react';
-import { ActionDeck } from '@/modules/mission/presentation/components/ActionDeck';
-import { AstrobotGuideBar } from '@/modules/mission/presentation/components/AstrobotGuideBar';
-import { AstrobotPanel } from '@/modules/mission/presentation/components/AstrobotPanel';
+import { Award, LifeBuoy, X } from 'lucide-react';
 import { ColonyMap } from '@/modules/mission/presentation/components/ColonyMap';
-import { NasaEventsPanel } from '@/modules/nasa/presentation/NasaEventsPanel';
-import { NasaGalleryPanel } from '@/modules/nasa/presentation/NasaGalleryPanel';
-import { getAstrobotStepGuide } from '@/modules/simulation/domain/astrobot';
-import type { BuildingId } from '@/modules/simulation/domain/types';
+import type { ActionType } from '@/modules/simulation/domain/types';
 import { useGameStore } from '@/stores/game.store';
+import { useAdventureStore } from '@/stores/adventure.store';
+import { DecisionReview } from '@/modules/adventure/presentation/DecisionReview';
+import { RescueExperience } from '@/modules/adventure/presentation/RescueExperience';
 
 export default function GamePage() {
   const {
@@ -20,85 +17,59 @@ export default function GamePage() {
     isPersisted,
     selectedBuilding,
     lastError,
-    lastTurnSummary,
     reducedMotion,
-    astrobot,
     hydrateOrStartMission,
     selectBuilding,
     executeAction,
     nextTurn,
-    startNewMission,
-    toggleReducedMotion,
     loadPreferences,
     clearError,
   } = useGameStore();
 
-  const [hasInspectedModule, setHasInspectedModule] = useState(false);
-  const [showBasePanel, setShowBasePanel] = useState(false);
+  const [decision, setDecision] = useState<ActionType | 'advance' | null>(null);
+  const [showRescue, setShowRescue] = useState(false);
+  const [notice, setNotice] = useState<{ title: string; text: string } | null>(null);
 
   useEffect(() => {
     loadPreferences();
+    useAdventureStore.getState().load();
     void hydrateOrStartMission();
   }, [hydrateOrStartMission, loadPreferences]);
 
   useEffect(() => {
-    const handlePanelKey = (event: KeyboardEvent) => {
-      if (event.key === 'Tab' && (event.target === document.body || event.target instanceof HTMLCanvasElement)) {
-        event.preventDefault();
-        setShowBasePanel((value) => !value);
-      }
-      if (event.key === 'Escape') setShowBasePanel(false);
-    };
-    window.addEventListener('keydown', handlePanelKey);
-    return () => window.removeEventListener('keydown', handlePanelKey);
-  }, []);
+    if (!notice) return;
+    const timer = window.setTimeout(() => setNotice(null), 9000);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
 
-  const handleSelectBuilding = (buildingId: BuildingId) => {
-    setHasInspectedModule(true);
-    selectBuilding(buildingId);
+  const requestDecision = (action: ActionType | 'advance') => {
+    if (!isPersisted || isSyncing) return;
+    clearError();
+    setDecision(action);
+  };
+  const confirmDecision = async () => {
+    if (!decision) return;
+    const before = useGameStore.getState().mission;
+    if (decision === 'advance') await nextTurn(); else await executeAction(decision);
+    const state = useGameStore.getState();
+    if (state.lastError || state.isSyncing) return;
+    const labels = { energy: 'energía', oxygen: 'oxígeno', food: 'comida', radiationProtection: 'protección', crewHealth: 'salud', science: 'ciencia' };
+    const changes = (Object.keys(labels) as (keyof typeof labels)[]).flatMap((key) => {
+      const delta = state.mission.resources[key] - before.resources[key];
+      return delta ? [`${delta > 0 ? '+' : '−'}${Math.abs(delta)} ${labels[key]}`] : [];
+    });
+    setNotice({ title: decision === 'advance' ? `Sol ${Math.min(state.mission.currentTurn, state.mission.maxTurns)} · Base actualizada` : 'Plan completado', text: changes.join(', ') || 'Las reservas se mantienen.' });
+    setDecision(null);
   };
 
-  const stepGuide = getAstrobotStepGuide(mission, hasInspectedModule);
   const isFinished = mission.status !== 'IN_PROGRESS';
 
   return (
-    <main className="flex-1 mx-auto w-full max-w-[1920px] px-2 sm:px-4 py-2 sm:py-3 flex flex-col gap-3">
-      {/* Barra superior de navegación y accesibilidad */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-cyan-300 hover:text-cyan-200"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Volver al inicio
-        </Link>
-
-        <div className="flex items-center gap-2">
-          <button type="button" onClick={() => setShowBasePanel((value) => !value)} aria-expanded={showBasePanel} className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/40 bg-stone-900 px-3 py-2 text-xs font-bold text-amber-100 hover:bg-stone-800"><PanelTop className="h-4 w-4" /> {showBasePanel ? 'Cerrar panel' : 'Panel de base'} <span className="hidden sm:inline">· TAB</span></button>
-          <button
-            type="button"
-            onClick={toggleReducedMotion}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-900/80 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-800 cursor-pointer"
-          >
-            <Eye className="h-3.5 w-3.5 text-cyan-300" />
-            {reducedMotion ? 'Movimiento reducido: ON' : 'Movimiento reducido: OFF'}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => startNewMission()}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-900/80 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-800 cursor-pointer"
-          >
-            <RotateCcw className="h-3.5 w-3.5 text-orange-300" />
-            Reiniciar misión
-          </button>
-        </div>
-      </div>
-
+    <main className="relative flex-1 w-full bg-[#201b1a]">
       {/* Banner de resultado cuando termina la partida */}
       {isFinished && (
         <div
-          className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-4 shadow-lg ${
+          className={`colony-mission-result flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-4 shadow-lg ${
             mission.status === 'VICTORY'
               ? 'border-emerald-500/60 bg-emerald-950/50'
               : 'border-red-500/60 bg-red-950/50'
@@ -108,12 +79,13 @@ export default function GamePage() {
             <p className="text-xs font-bold uppercase tracking-wider text-white/80">
               {mission.status === 'VICTORY'
                 ? '¡Misión Completada!'
-                : 'Misión Interrumpida'}
+                : 'Probemos otro plan'}
             </p>
             <p className="text-base font-bold text-white">
               {mission.outcomeReason}
             </p>
           </div>
+          {mission.status === 'DEFEAT' && !mission.actionHistory.some((action) => action.kind === 'RESCUE') && <button type="button" onClick={() => { clearError(); setShowRescue(true); }} className="inline-flex items-center gap-2 rounded-xl bg-amber-200 px-4 py-3 font-bold text-stone-950"><LifeBuoy size={20} />Misión de rescate</button>}
           <Link
             href="/results"
             className="inline-flex items-center gap-2 rounded-xl bg-white text-slate-950 px-4 py-2.5 text-sm font-bold hover:bg-slate-200"
@@ -124,39 +96,28 @@ export default function GamePage() {
         </div>
       )}
 
-      {isSyncing && <p role="status" className="rounded-xl border border-cyan-500/30 bg-cyan-950/30 px-4 py-2 text-sm text-cyan-100">Guardando tu decisión…</p>}
+      {isSyncing && <p role="status" className="colony-saving">Guardando tu decisión…</p>}
+      {lastError && !decision && !showRescue && <p role="alert" className="colony-message">{lastError}</p>}
 
       <div className="w-full">
           <ColonyMap
+            key={mission.missionId}
             selectedBuilding={selectedBuilding}
-            onSelectBuilding={handleSelectBuilding}
+            onSelectBuilding={selectBuilding}
             activeEvent={mission.activeEvent}
             reducedMotion={reducedMotion}
             mission={mission}
             isSyncing={isSyncing}
             isPersisted={isPersisted}
-            onExecuteAction={executeAction}
+            onExecuteAction={requestDecision}
+            onAdvance={() => requestDecision('advance')}
+            onRescue={() => { clearError(); setShowRescue(true); }}
           />
       </div>
 
-      {showBasePanel && <section role="dialog" aria-modal="true" aria-label="Panel de la base" className="fixed inset-2 z-50 overflow-y-auto rounded-2xl border border-stone-500/70 bg-stone-950/95 p-4 shadow-2xl backdrop-blur-lg sm:inset-6">
-        <div className="mb-4 flex items-center justify-between gap-3 border-b border-stone-700 pb-3"><div><p className="text-xs font-bold uppercase tracking-[0.22em] text-amber-300">Aurora-1</p><h2 className="text-xl font-bold text-white">Panel de la base</h2></div><button type="button" onClick={() => setShowBasePanel(false)} className="rounded-lg border border-stone-500 px-4 py-2 text-sm font-bold text-white hover:bg-stone-800">Cerrar · ESC</button></div>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        <div className="flex flex-col gap-4 lg:col-span-8">
-          <AstrobotGuideBar guide={stepGuide} reducedMotion={reducedMotion} onFocusBuilding={handleSelectBuilding} />
-          <ActionDeck mission={mission} selectedBuilding={selectedBuilding} lastError={lastError} onExecuteAction={executeAction} onAdvanceTurn={nextTurn} onClearError={clearError} />
-        </div>
-        <div className="flex flex-col gap-4 lg:col-span-4">
-          <AstrobotPanel
-            astrobot={astrobot}
-            activeEvent={mission.activeEvent}
-            turnSummary={lastTurnSummary}
-          />
-          <NasaEventsPanel />
-          <NasaGalleryPanel />
-        </div>
-        </div>
-      </section>}
+      {decision && <DecisionReview decision={decision} mission={mission} busy={isSyncing} error={lastError} onConfirm={() => void confirmDecision()} onClose={() => setDecision(null)} />}
+      {showRescue && <RescueExperience onClose={() => setShowRescue(false)} />}
+      {notice && <aside role="status" className="adventure-result"><div><strong>{notice.title}</strong><button type="button" aria-label="Cerrar resultado de la decisión" onClick={() => setNotice(null)}><X size={20} /></button></div><p>{notice.text}</p></aside>}
     </main>
   );
 }
