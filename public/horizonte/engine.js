@@ -353,6 +353,104 @@ const interiorThemes={
 };
 function interiorWorld(gl,id){
  const b=new Builder(),t=interiorThemes[id]||interiorThemes.regulator,accent=t.accent;
+ if(id==='greenhouse'){
+  // Invernadero cinematográfico: pasillo central, cúpula de arcos naranjas y racks hidropónicos de 4 niveles.
+  const ghRand=rng(55283);
+  const lettuce=(x,y,z,size,tint)=>{
+   beam(b,[x,y,z],[x,y+size*.6,z],.025*size,'#589a59',5,0,.1);
+   const base=size*.23;
+   for(let i=0;i<6;i++){
+    const a=i*TAU/6,p0=[x,y+size*.08,z],mid=[x+Math.cos(a)*size*.34,y+size*(.48+.13*Math.sin(i*8.5)),z+Math.sin(a)*size*.34],tip=[x+Math.cos(a)*size*.57,y+size*.65,z+Math.sin(a)*size*.57];
+    b.tri(p0,mid,tip,i%2?tint:'#56b86a',.04,.05,.68);
+    b.tri(p0,tip,mid,i%2?'#2f854c':tint,.04,.05,.7);
+   }
+   sphere(b,[x,y+size*.4,z],base,size*.4,base,'#4eaa59',6,7,0,.25);
+  };
+  // Piso metálico amplio (26x24 m), pasillo central y tiras luminosas
+  box(b,0,-.18,0,26,.35,24,'#3f4745',0,0,0,.65,.55);
+  box(b,0,.02,0,6.2,.05,23.2,'#77705e',0,0,0,.6,.52);
+  for(let x=-11;x<=11;x+=2.2)box(b,x,-.004,0,.05,.02,23.2,Math.abs(x)%4<1?'#a1957a':'#586160');
+  for(let z=-10;z<=10;z+=2)box(b,0,.035,z,25.2,.022,.07,'#a5a18b',0,0,0,.4,.6);
+  for(const x of [-3.2,3.2]){
+   box(b,x,.05,0,.14,.04,22.4,'#e9ab57',0,0,.65,.5);
+   box(b,x,.08,0,.045,.025,22.4,'#61d9d7',0,0,2.2,.2);
+  }
+  for(let z=-10;z<=10;z+=2.4){
+   box(b,-3.55,.06,z,.22,.035,.8,'#edb04f',0,0,.35,.4);
+   box(b,3.55,.06,z,.22,.035,.8,'#edb04f',0,0,.35,.4);
+  }
+  // Cúpula con arcos estructurales naranjas, largueros y luminarias superiores
+  for(let z=-11;z<=11;z+=4.4){
+   let prev=null;
+   for(let i=0;i<=18;i++){
+    const ang=-Math.PI/2+i*Math.PI/18,p=[Math.sin(ang)*12.4,2.4+Math.cos(ang)*5.8,z];
+    if(prev)beam(b,prev,p,.17,Math.round(z)%2?'#e38443':'#b85b35',8);
+    prev=p;
+   }
+   for(const sx of [-12.2,12.2])box(b,sx,1.5,z,.34,3.1,.34,'#9a5d43');
+   box(b,0,8.05,z,2.5,.18,.48,'#f1c06b',0,0,0,.4);
+   box(b,0,7.92,z,2.3,.07,.36,'#fff0c3',0,0,2.1,.1);
+  }
+  for(let i=-6;i<=6;i++){
+   const ang=i*Math.PI/14,x=12.35*Math.sin(ang),y=2.4+5.8*Math.cos(ang);
+   beam(b,[x,y,-12],[x,y,12],.10,'#8c9d96',7);
+  }
+  // Muros de fondo/frente y paisaje marciano visible tras las costillas
+  box(b,0,4.2,-12.1,26,8.6,.4,'#2d4239');
+  box(b,0,4.2,12.1,26,8.6,.4,'#2d4239');
+  for(const sx of [-12.75,12.75]){
+   box(b,sx,4.3,0,.15,8.4,24.4,'#4f6b5a',0,0,.15);
+   box(b,sx*.98,.65,0,.38,1.3,24,'#3e4c45');
+  }
+  for(let x of [-12.2,12.2])for(let z=-10;z<=10;z+=3.2){
+   box(b,x,1.35,z,.42,.18,2.4,'#eeb44e',0,0,.22,.48);
+   box(b,x,2.25,z,.12,2.0,.15,'#a7754d');
+  }
+  // Esclusa de salida (z = 11.7)
+  box(b,0,1.55,11.72,3.6,3.1,.25,'#253235');
+  box(b,0,3.35,11.55,3.5,.24,.2,accent,0,0,1.2);
+  for(const x of [-1.55,1.55])box(b,x,1.5,11.56,.16,2.7,.16,'#b8cbc6');
+  box(b,0,1.4,11.62,2.6,2.4,.12,'#192326');
+  // Consola principal de comando (z = -8.8)
+  box(b,0,1.25,-8.8,5.2,2.3,1.5,'#354346');
+  box(b,0,2.2,-7.98,4.4,1.15,.12,'#113744',0,0,.5);
+  box(b,0,2.24,-7.9,3.5,.68,.06,accent,0,0,1.8);
+  for(const x of [-1.7,-.9,.9,1.7])box(b,x,1.08,-7.98,.38,.12,.14,'#e1b676',0,0,1.2);
+  for(const side of [-1,1])box(b,side*3.3,1.8,-9.2,1.1,3.4,1.2,'#3c4749');
+  // Racks hidropónicos de 4 niveles con luces LED de cultivo, tubería de riego y lechugas 3D
+  for(const side of [-1,1]){
+   const rx=side*8.9;
+   for(const rz of [-6.0,-1.5,3.0,7.5]){
+    for(let level=0;level<4;level++){
+     const y=.62+level*1.22;
+     box(b,rx,y,rz,3.9,.13,3.5,'#aaa995',0,0,0,.7);
+     box(b,rx,y+.15,rz,3.65,.28,3.2,'#4d6663',0,0,0,.34);
+     box(b,rx,y+.31,rz,3.4,.1,3.0,'#30483a',0,0,0,.12);
+     box(b,rx,y+1.0,rz,3.5,.08,3.1,'#e9d7b0',0,0,1.55,.28);
+     box(b,rx,y+.95,rz,3.3,.04,3.0,'#e6c581',0,0,1.8,.22);
+     for(const dx of [-1.68,1.68])for(const dz of [-1.45,1.45])box(b,rx+dx,y+.42,rz+dz,.09,1.05,.09,'#e1a44d');
+     beam(b,[rx-side*1.55,y+.32,rz-1.45],[rx-side*1.55,y+.32,rz+1.45],.042,'#36a9ae',6);
+     for(let ix=0;ix<3;ix++)for(let iz=0;iz<3;iz++){
+      const lx=rx-1.05+ix*1.05,lz=rz-1.0+iz*1.0;
+      const size=.48+ghRand()*.2;
+      lettuce(lx,y+.37,lz,size,iz%2?'#56c15b':'#79dc6b');
+     }
+    }
+   }
+  }
+  // Tanques de agua reciclada y frascos de nutrientes junto a la cabecera
+  for(const x of [-6.5,-5.5]){
+   beam(b,[x,0,-9.6],[x,2.9,-9.6],.34,'#719d9f',12);
+   beam(b,[x,2.3,-9.6],[x,2.65,-9.6],.38,'#95c5c1',12);
+   sphere(b,[x,2.95,-9.6],.44,.15,.44,'#bcc9bd',7,12);
+  }
+  for(let i=0;i<6;i++){
+   const nx=5.4+(i%3)*.48,nz=-9.8+Math.floor(i/3)*.55;
+   beam(b,[nx,1.2,-9.6+Math.floor(i/3)*.55],[nx,2.0,-9.6+Math.floor(i/3)*.55],.13,i%2?'#b2c86d':'#73dada',10,0,.3);
+   box(b,nx,1.98,nz,.28,.08,.28,'#dcd8b4',0,0,0,.6);
+  }
+  return b.build(gl);
+ }
  // Piso metálico amplio (26x24 m) con paleta propia del módulo
  box(b,0,-.18,0,26,.35,24,t.floor);
  box(b,0,.01,0,6.4,.04,22.2,t.walk);
@@ -472,6 +570,7 @@ function createDemo(canvas,handlers={}){
     }
    state.walkAmp=mix(state.walkAmp,state.moving?1:0,clamp(dt*12,0,1));
    state.storm=mix(state.storm,state.stormTarget,Math.min(1,dt*.65));
+   if(state.eatTimer>0){state.eatTimer=Math.max(0,state.eatTimer-dt);if(state.eatTimer===0){state.heldFood=null;handlers.onEatDone?.()}}
   }
    const y=(state.interior?0:height(state.pos[0],state.pos[2]))+state.jumpHeight;state.pos[1]=y;
   const fx=Math.sin(state.yaw),fz=-Math.cos(state.yaw);const fp=state.camera==='first',theme=state.interior?(interiorThemes[state.interior]||interiorThemes.regulator):null;
@@ -485,6 +584,16 @@ function createDemo(canvas,handlers={}){
   if(!state.interior){modelAt(model,state.pos[0],0,state.pos[2],0,0);renderMesh(scene.sky,model)}
   renderMesh(state.interior?interiors[state.interior]:scene.world,id);
   if(!state.interior)for(const craft of saucers){const t=frame*craft.speed+craft.phase;modelAt(model,craft.x+Math.sin(t)*5,craft.y+Math.sin(frame*1.2+craft.phase)*.5,craft.z+Math.cos(t)*3,t*.45,0);renderMesh(scene.saucer.body,model)}
+  if(state.interior==='greenhouse')for(const [rx,rz,ryaw,rcargo,rphase] of [[2.1,-4.2,2.65,'plant',0],[-2.1,-0.8,0.85,'crate',1.8]]){
+   const bob=Math.sin(frame*1.8+rphase)*.015;
+   modelAt(model,rx,0,rz,ryaw,bob);renderMesh(scene.robotBody,model);
+   if(scene.robotCargos[rcargo]){modelAt(model,rx,0,rz,ryaw,bob);renderMesh(scene.robotCargos[rcargo],model);}
+   for(const [mesh,pivotY,angle] of [[scene.robotLeftLeg,.95,0],[scene.robotRightLeg,.95,0],[scene.robotLeftArm,1.72,.52],[scene.robotRightArm,1.72,.52]]){
+    modelAt(model,rx,pivotY,rz,ryaw,bob);
+    identity(legSwing);legSwing[5]=Math.cos(angle);legSwing[6]=Math.sin(angle);legSwing[9]=-Math.sin(angle);legSwing[10]=Math.cos(angle);
+    multiply(legModel,model,legSwing);renderMesh(mesh,legModel);
+   }
+  }
   if(!state.interior)for(const robot of patrols){
    const ground=height(robot.x,robot.z),bob=robot.moving?Math.abs(Math.sin(robot.walk))*.035:0;
    modelAt(model,robot.x,ground,robot.z,robot.yaw,bob);renderMesh(scene.robotBody,model);
