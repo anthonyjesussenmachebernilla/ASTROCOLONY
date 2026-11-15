@@ -657,19 +657,22 @@
         }
 
         .botavatar {
-            flex: 0 0 88px;
-            height: 92px;
+            flex: 0 0 92px;
+            height: 96px;
             display: grid;
             place-items: center;
             position: relative;
-            cursor: pointer
+            cursor: pointer;
+            overflow: visible
         }
 
         .botgif {
-            width: 88px;
-            height: 92px;
+            width: 122px;
+            height: 122px;
+            max-width: none;
             object-fit: contain;
             pointer-events: none;
+            transform: scale(1.08);
             filter: drop-shadow(0 4px 14px rgba(104, 213, 234, .45))
         }
 
@@ -1323,10 +1326,10 @@
         .controls {
             left: 24px;
             bottom: 24px;
-            width: 286px;
+            width: 344px;
             grid-template-columns: 1fr 1fr;
-            gap: 7px 11px;
-            padding: 11px 12px;
+            gap: 7px 12px;
+            padding: 11px 13px;
             font-size: 10px
         }
 
@@ -2693,7 +2696,7 @@
  <div class="interior-hud hidden" id="interiorHud"><strong id="interiorName">Módulo</strong><span id="interiorHint">Explora el interior</span></div>
  <button type="button" id="discoveryMarker" class="discovery-marker hidden" aria-label="Información con imagen de NASA sobre la matriz de paneles"><span aria-hidden="true">ⓘ</span><span>Información con imagen<small>Matriz de paneles · NASA</small></span></button>
  <div class="interior-reticle" aria-hidden="true"></div>
-  <div class="controls"><div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>Mover</span></div><div><kbd>Espacio</kbd><span>Saltar</span></div><div><kbd>Mouse</kbd><span>Mirar</span></div><div><kbd>E</kbd><span>Entrar / usar / hablar</span></div><div><kbd>V</kbd><span>Cambiar vista</span></div><div><kbd>P</kbd><span>Panel de base</span></div><div><kbd>Esc</kbd><span>Pausa</span></div></div>
+  <div class="controls"><div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>Mover</span></div><div><kbd>Shift</kbd><span>Correr</span></div><div><kbd>Espacio</kbd><span>Saltar</span></div><div><kbd>Mouse</kbd><span>Mirar</span></div><div><kbd>E</kbd><span>Entrar / usar / hablar</span></div><div><kbd>V</kbd><span>Cambiar vista</span></div><div><kbd>P</kbd><kbd>Tab</kbd><span>Panel de base</span></div><div><kbd>M</kbd><kbd>Ctrl+R</kbd><span>Mochila</span></div><div><kbd>Ctrl+E</kbd><span>Comer</span></div><div><kbd>Esc</kbd><span>Pausa / salir</span></div></div>
  <div class="astrobot"><div class="botavatar" id="botAvatar" title="Haz clic para recibir un consejo"><img class="botgif" src="astrobot.gif" alt="Astrobot guía"></div><div class="astrocopy"><div class="botname">ASTROBOT <span style="font-size:12px;float:right">▥</span></div><p id="botText" aria-live="polite">El sistema de energía está inestable. Revisemos los paneles solares antes de que empeore.</p><div class="bot-actions"><button type="button" class="bot-chip" id="botHelpNow">¿Qué hago?</button><button type="button" class="bot-chip" id="botControlsBtn">Controles</button><button type="button" class="bot-chip" id="botTargetBtn">📍 Objetivo</button></div><div class="botstat" id="botStatus">● CANAL DE ASISTENCIA ACTIVO</div></div></div>
  <button class="menu-pause" id="pause">☰ &nbsp; MENÚ · ESC</button>
  <div class="mobile-controls"><div class="dpad"><div></div><button data-key="KeyW" aria-label="Adelante">↑</button><div></div><button data-key="KeyA" aria-label="Izquierda">←</button><button data-key="KeyS" aria-label="Atrás">↓</button><button data-key="KeyD" aria-label="Derecha">→</button></div></div>
