@@ -195,10 +195,7 @@ function smallDetails(b){
  for(const xx of [-8,9]){box(b,xx,.08,8,4,.1,4,'#373636');for(let i=0;i<4;i++){box(b,xx-1.6+i, .15,8,.12,.02,3.8,'#6f5e4f')}}
 }
 const skinCatalog=[
- {id:'explorer',name:'Explorador',price:0,suit:'#bbb8ab',helmet:'#d4d1c2',pack:'#575954',visor:'#1a3c45',accent:'#87c2c0',boots:'#504e4b'},
- {id:'solar',name:'Aurora solar',price:40,suit:'#d7a668',helmet:'#f1c98e',pack:'#7a472d',visor:'#284a55',accent:'#ffd27a',boots:'#65453a'},
- {id:'botanic',name:'Guardiana verde',price:65,suit:'#83a995',helmet:'#c4d9bc',pack:'#385c50',visor:'#214847',accent:'#b0ef9e',boots:'#385447'},
- {id:'commander',name:'Comandante',price:95,suit:'#a3b5c9',helmet:'#e2e8e9',pack:'#364d68',visor:'#162b49',accent:'#8dd9ff',boots:'#28394d'},
+ {id:'explorer',name:'Explorador',suit:'#bbb8ab',helmet:'#d4d1c2',pack:'#575954',visor:'#1a3c45',accent:'#87c2c0',boots:'#504e4b'},
 ];
 function astronaut(body,leftArm,rightArm,leftLeg,rightLeg,skin){
  // Adult scale ~2.3 m; original chunky suit silhouette with articulated limbs.
@@ -290,7 +287,7 @@ function compileWorld(gl){rocks.length=0;const b=new Builder(),g=new Builder();e
  const avatars={};
  const getAvatar=id=>{if(!avatars[id]){const skin=skinCatalog.find(s=>s.id===id)||skinCatalog[0],body=new Builder(),leftArm=new Builder(),rightArm=new Builder(),leftLeg=new Builder(),rightLeg=new Builder();astronaut(body,leftArm,rightArm,leftLeg,rightLeg,skin);avatars[id]={body:body.build(gl),leftArm:leftArm.build(gl),rightArm:rightArm.build(gl),leftLeg:leftLeg.build(gl),rightLeg:rightLeg.build(gl)}}return avatars[id]};
   const robotBody=new Builder(),robotLeftArm=new Builder(),robotRightArm=new Builder(),robotLeftLeg=new Builder(),robotRightLeg=new Builder();patrolRobot(robotBody,robotLeftArm,robotRightArm,robotLeftLeg,robotRightLeg);
-  return {world:b.build(gl),glass:g.build(gl),sky:skyGeometry(gl),saucer:saucerGeometry(gl),getAvatar,foodMeshes:foodMeshes(gl),robotBody:robotBody.build(gl),robotLeftArm:robotLeftArm.build(gl),robotRightArm:robotRightArm.build(gl),robotLeftLeg:robotLeftLeg.build(gl),robotRightLeg:robotRightLeg.build(gl),robotCargos:robotCargos(gl)};
+  return {world:b.build(gl),glass:g.build(gl),sky:skyGeometry(gl),saucer:saucerGeometry(gl),getAvatar,robotBody:robotBody.build(gl),robotLeftArm:robotLeftArm.build(gl),robotRightArm:robotRightArm.build(gl),robotLeftLeg:robotLeftLeg.build(gl),robotRightLeg:robotRightLeg.build(gl),robotCargos:robotCargos(gl),foodMeshes:foodMeshes(gl)};
 }
 function mat4(){return new Float32Array(16)}
 function identity(out){out.fill(0);out[0]=out[5]=out[10]=out[15]=1;return out}
@@ -431,7 +428,7 @@ function createDemo(canvas,handlers={}){
  const gl=canvas.getContext('webgl2',{alpha:true,antialias:true,powerPreference:'high-performance'});if(!gl)throw Error('Este navegador no dispone de WebGL 2.');
  const scene=compileWorld(gl),interiors=Object.fromEntries(stations.map(s=>[s.id,interiorWorld(gl,s.id)])),shaderProgram=makeProgram(gl),dust=particles(gl);
  const loc={vp:gl.getUniformLocation(shaderProgram,'uVP'),model:gl.getUniformLocation(shaderProgram,'uModel'),eye:gl.getUniformLocation(shaderProgram,'uEye'),storm:gl.getUniformLocation(shaderProgram,'uStorm'),glass:gl.getUniformLocation(shaderProgram,'uGlass'),interior:gl.getUniformLocation(shaderProgram,'uInterior'),time:gl.getUniformLocation(shaderProgram,'uTime')};
-   const state={pos:[0,0,19],yaw:0,avatarYaw:0,pitch:0,camera:'third',skin:'explorer',storm:0,stormTarget:0,walk:0,walkAmp:0,moving:false,jumpHeight:0,jumpVelocity:0,active:false,keys:new Set(),zoom:9.5,paused:false,interior:null,outside:null,heldFood:null,eatTimer:0};
+   const state={pos:[0,0,19],yaw:0,avatarYaw:0,pitch:0,camera:'third',skin:'explorer',storm:0,stormTarget:0,walk:0,walkAmp:0,moving:false,jumpHeight:0,jumpVelocity:0,active:false,keys:new Set(),zoom:9.5,paused:false,interior:null,outside:null};
  const eye=[5,6,35],target=[0,2,0],projection=mat4(),view=mat4(),vp=mat4(),model=mat4(),legModel=mat4(),legSwing=mat4(),id=identity(mat4());let frame=0,old=performance.now(),raf=0,lastEmit=0,lastPerf=performance.now(),fps=60,frames=0;
  function rescale(){const dpr=Math.min(window.devicePixelRatio||1,1.5),w=Math.max(1,Math.floor(canvas.clientWidth*dpr)),h=Math.max(1,Math.floor(canvas.clientHeight*dpr));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}gl.viewport(0,0,w,h);return [canvas.clientWidth,canvas.clientHeight];}
  function renderMesh(mesh,mat,glass=0){gl.uniformMatrix4fv(loc.model,false,mat);gl.uniform1f(loc.glass,glass);gl.bindVertexArray(mesh.vao);gl.drawArrays(gl.TRIANGLES,0,mesh.count)}
@@ -445,7 +442,7 @@ function createDemo(canvas,handlers={}){
   if(interior&&(!saved.outside||!Array.isArray(saved.outside.pos)||saved.outside.pos.length!==3||!saved.outside.pos.every(Number.isFinite)))return false;
   state.interior=interior;state.outside=interior?{pos:[clamp(saved.outside.pos[0],-53,53),0,clamp(saved.outside.pos[2],-48,42)],yaw:Number.isFinite(saved.outside.yaw)?saved.outside.yaw:0,avatarYaw:Number.isFinite(saved.outside.avatarYaw)?saved.outside.avatarYaw:0,camera:saved.outside.camera==='first'?'first':'third'}:null;
   state.pos=[clamp(saved.pos[0],interior?-11.8:-53,interior?11.8:53),0,clamp(saved.pos[2],interior?-10.8:-48,interior?10.8:42)];
-  state.yaw=saved.yaw;state.avatarYaw=saved.avatarYaw;state.pitch=clamp(saved.pitch,-.32,.43);state.camera=saved.camera==='first'?'first':'third';state.skin=skinCatalog.some(s=>s.id===saved.skin)?saved.skin:'explorer';state.zoom=clamp(Number.isFinite(saved.zoom)?saved.zoom:9.5,5.8,17);
+  state.yaw=saved.yaw;state.avatarYaw=saved.avatarYaw;state.pitch=clamp(saved.pitch,-.32,.43);state.camera=saved.camera==='first'?'first':'third';state.skin='explorer';state.zoom=clamp(Number.isFinite(saved.zoom)?saved.zoom:9.5,5.8,17);
   state.storm=clamp(Number.isFinite(saved.storm)?saved.storm:0,0,1);state.stormTarget=saved.stormTarget?1:0;state.jumpHeight=state.jumpVelocity=0;state.pos[1]=interior?0:height(state.pos[0],state.pos[2]);stopInput();
   const fx=Math.sin(state.yaw),fz=-Math.cos(state.yaw),y=state.pos[1],fp=state.camera==='first';
   const restoredEye=fp?[state.pos[0],y+1.9,state.pos[2]]:[state.pos[0]-fx*state.zoom+2,y+4.2+state.zoom*.13,state.pos[2]-fz*state.zoom+1.2];
@@ -469,7 +466,6 @@ function createDemo(canvas,handlers={}){
      if(state.jumpHeight===0)state.jumpVelocity=0;
     }
    state.walkAmp=mix(state.walkAmp,state.moving?1:0,clamp(dt*12,0,1));
-   if(state.eatTimer>0){state.eatTimer=Math.max(0,state.eatTimer-dt);if(state.eatTimer===0){state.heldFood=null;handlers.onEatDone?.()}}
    state.storm=mix(state.storm,state.stormTarget,Math.min(1,dt*.65));
   }
    const y=(state.interior?0:height(state.pos[0],state.pos[2]))+state.jumpHeight;state.pos[1]=y;
@@ -535,11 +531,11 @@ function createDemo(canvas,handlers={}){
   for(const craft of saucers){const t=frame*craft.speed+craft.phase;modelAt(model,craft.x+Math.sin(t)*5,craft.y+Math.sin(frame*1.2+craft.phase)*.5,craft.z+Math.cos(t)*3,t*.45,0);renderMesh(scene.saucer.glass,model,1)}
   gl.useProgram(dust.program);gl.uniformMatrix4fv(dust.vp,false,vp);gl.uniform1f(dust.time,frame);gl.uniform3f(dust.eye,...eye);gl.bindVertexArray(dust.vao);gl.drawArrays(gl.POINTS,0,dust.count);gl.depthMask(true);gl.disable(gl.BLEND);}
   frames++;if(now-lastPerf>850){fps=Math.round(frames*1000/(now-lastPerf));frames=0;lastPerf=now;}
-  if(now-lastEmit>120){const near=nearest(),projected={},skyMarkers=[];if(!state.interior){for(const s of stations)projected[s.id]=project([s.x,s.y,s.z],vp,[canvas.clientWidth,canvas.clientHeight]);for(const body of skyBodies)skyMarkers.push({name:body.name,...project([state.pos[0]+body.x,body.y+body.r+2,state.pos[2]+body.z],vp,[canvas.clientWidth,canvas.clientHeight])});for(const craft of saucers){const t=frame*craft.speed+craft.phase;skyMarkers.push({name:'Platillo · ficción',...project([craft.x+Math.sin(t)*5,craft.y+3,craft.z+Math.cos(t)*3],vp,[canvas.clientWidth,canvas.clientHeight])})}}handlers.onTick?.({nearest:near,markers:projected,skyMarkers,pos:[...state.pos],view:state.camera,storm:state.storm,fps,interior:state.interior,moving:state.moving});lastEmit=now;}
+  if(now-lastEmit>120){const near=nearest(),projected={},skyMarkers=[];if(!state.interior){for(const s of stations)projected[s.id]=project([s.x,s.y,s.z],vp,[canvas.clientWidth,canvas.clientHeight]);for(const body of skyBodies)skyMarkers.push({name:body.name,...project([state.pos[0]+body.x,body.y+body.r+2,state.pos[2]+body.z],vp,[canvas.clientWidth,canvas.clientHeight])});for(const craft of saucers){const t=frame*craft.speed+craft.phase;skyMarkers.push({name:'Platillo · ficción',...project([craft.x+Math.sin(t)*5,craft.y+3,craft.z+Math.cos(t)*3],vp,[canvas.clientWidth,canvas.clientHeight])})}}handlers.onTick?.({nearest:near,markers:projected,skyMarkers,pos:[...state.pos],view:state.camera,storm:state.storm,fps,interior:state.interior,discoveryMarker:(()=>{const location=window.MarsDiscovery?.locations[state.interior],target=interiorHotspots[state.interior]?.find(target=>target.id===location?.targetId);return target?project([target.x,2.9,target.z],vp,[canvas.clientWidth,canvas.clientHeight]):null})()});lastEmit=now;}
   raf=requestAnimationFrame(update);
  }
  const movementKeys=['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','ShiftLeft'];
- function keydown(e){if(!state.active)return;if(state.paused&&e.code!=='Escape'&&e.code!=='KeyM'&&!((e.ctrlKey||e.metaKey)&&e.code==='KeyR'))return;if([...movementKeys,'Space','KeyV','KeyE','KeyP','KeyM','Tab','Escape'].includes(e.code)||((e.ctrlKey||e.metaKey)&&e.code==='KeyR'))e.preventDefault();if((e.code==='KeyM'||((e.ctrlKey||e.metaKey)&&e.code==='KeyR'))&&!e.repeat){handlers.onBackpack?.();return}if(e.code==='KeyV'&&!e.repeat){state.camera=state.camera==='third'?'first':'third';handlers.onCamera?.(state.camera)}if(e.code==='KeyE'&&!e.repeat){if(e.ctrlKey||e.metaKey)handlers.onEat?.();else handlers.onInteract?.(nearest())}if(e.code==='Escape'&&!e.repeat)handlers.onEscape?.();if((e.code==='KeyP'||e.code==='Tab')&&!e.repeat)handlers.onPanel?.();if(e.code==='Space'&&!e.repeat&&state.jumpHeight===0&&state.jumpVelocity===0)state.jumpVelocity=6.8;if(movementKeys.includes(e.code))state.keys.add(e.code)}
+ function keydown(e){if(!state.active||e.ctrlKey||e.metaKey||e.altKey)return;if(state.paused&&e.code!=='Escape')return;if([...movementKeys,'Space','KeyV','KeyE','KeyP','Tab','Escape'].includes(e.code))e.preventDefault();if(e.code==='KeyV'&&!e.repeat){state.camera=state.camera==='third'?'first':'third';handlers.onCamera?.(state.camera)}if(e.code==='KeyE'&&!e.repeat)handlers.onInteract?.(nearest());if(e.code==='Escape'&&!e.repeat)handlers.onEscape?.();if((e.code==='KeyP'||e.code==='Tab')&&!e.repeat)handlers.onPanel?.();if(e.code==='Space'&&!e.repeat&&state.jumpHeight===0&&state.jumpVelocity===0)state.jumpVelocity=6.8;if(movementKeys.includes(e.code))state.keys.add(e.code)}
  function keyup(e){state.keys.delete(e.code)}
  function stopInput(){state.keys.clear();state.moving=false}
  function onVisibilityChange(){if(document.hidden)stopInput()}

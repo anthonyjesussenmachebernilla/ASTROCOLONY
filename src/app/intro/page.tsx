@@ -1,24 +1,33 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { ArrowRight, Play, SkipForward } from 'lucide-react';
 import { ExplorerPreferences } from '@/modules/adventure/presentation/ExplorerPreferences';
 
 const SCENES = [
   { eyebrow: 'Nuevo objetivo', title: 'Conoce Aurora-1', objective: 'Sigue al ingeniero López y conoce la base.', speaker: 'Ing. López', line: 'Bienvenida a Aurora-1. Antes de salir, quiero mostrarte qué mantiene viva a la tripulación.', action: 'Seguir a López', position: 'left-[59%] top-[52%]', imagePosition: 'center center' },
   { eyebrow: 'Sistema vital', title: 'Revisa el suministro', objective: 'Inspecciona el panel de energía de la base.', speaker: 'Ing. López', line: 'La electricidad alimenta el oxígeno, el refugio y el invernadero. Cada decisión gasta una parte.', action: 'Inspeccionar panel', position: 'left-[27%] top-[54%]', imagePosition: '32% center' },
-  { eyebrow: 'Alerta de misión', title: 'Prepara la colonia', objective: 'Observa Marte y decide qué atender primero.', speaker: 'Astrobot', line: 'Fuera nos esperan diez soles. Vigila los recursos, entra a los módulos y elige hasta dos acciones por sol.', action: 'Mirar hacia Marte', position: 'left-[82%] top-[48%]', imagePosition: '70% center' },
+  { eyebrow: 'Tu expedición', title: 'Prepara la colonia', objective: 'Aprende, cuida la base y resuelve el misterio.', speaker: 'Astrobot', line: 'Nos esperan diez soles. Los tres primeros son tu entrenamiento. Después cuidarás la base e investigarás una señal misteriosa. Tú eliges cuándo terminar cada sol.', action: 'Mirar hacia Marte', position: 'left-[82%] top-[48%]', imagePosition: '70% center' },
 ] as const;
+
+function subscribeToMode(onChange: () => void) {
+  window.addEventListener('storage', onChange);
+  return () => window.removeEventListener('storage', onChange);
+}
+
+function savedMode(): 'explorador' | 'comandante' {
+  try { return localStorage.getItem('astrocolony-mode') === 'comandante' ? 'comandante' : 'explorador'; }
+  catch { return 'explorador'; }
+}
 
 export default function IntroPage() {
   const [step, setStep] = useState(0);
-  const [mode, setMode] = useState<'explorador' | 'comandante'>('explorador');
+  const mode = useSyncExternalStore(subscribeToMode, savedMode, () => 'explorador');
   const scene = SCENES[step];
   const finished = step === SCENES.length;
 
   useEffect(() => {
-    setMode(localStorage.getItem('astrocolony-mode') === 'comandante' ? 'comandante' : 'explorador');
     const handleKey = (event: KeyboardEvent) => {
       if (event.key.toLowerCase() === 'e' && !event.repeat && !(event.target instanceof HTMLElement && event.target.closest('input, textarea, select, [contenteditable]'))) {
         setStep((current) => Math.min(SCENES.length, current + 1));

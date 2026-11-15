@@ -43,12 +43,10 @@ export default function HomePage() {
 
   useEffect(() => {
     loadPreferences();
-    const savedMode = window.localStorage.getItem(GAME_MODE_KEY);
-    if (savedMode === 'explorador' || savedMode === 'comandante') setMode(savedMode);
-    const savedLang = window.localStorage.getItem(GAME_LANG_KEY);
-    if (savedLang === 'es' || savedLang === 'en') setLang(savedLang);
+    if (window.localStorage.getItem(GAME_MODE_KEY) === 'comandante') setMode('comandante');
+    if (window.localStorage.getItem(GAME_LANG_KEY) === 'en') setLang('en');
     const savedChapter = window.localStorage.getItem(SOL_CHAPTER_KEY);
-    if (savedChapter === 'tutorial' || savedChapter === 'survival' || savedChapter === 'final') setSolChapter(savedChapter);
+    if (savedChapter === 'survival' || savedChapter === 'final') setSolChapter(savedChapter);
   }, [loadPreferences]);
 
   const chooseMode = (choice: 'explorador' | 'comandante') => {
