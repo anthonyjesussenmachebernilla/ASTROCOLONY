@@ -13,10 +13,12 @@ const SCENES = [
 
 export default function IntroPage() {
   const [step, setStep] = useState(0);
+  const [mode, setMode] = useState<'explorador' | 'comandante'>('explorador');
   const scene = SCENES[step];
   const finished = step === SCENES.length;
 
   useEffect(() => {
+    setMode(localStorage.getItem('astrocolony-mode') === 'comandante' ? 'comandante' : 'explorador');
     const handleKey = (event: KeyboardEvent) => {
       if (event.key.toLowerCase() === 'e' && !event.repeat && !(event.target instanceof HTMLElement && event.target.closest('input, textarea, select, [contenteditable]'))) {
         setStep((current) => Math.min(SCENES.length, current + 1));
@@ -30,7 +32,7 @@ export default function IntroPage() {
     <div className="absolute inset-0 -z-20 bg-cover transition-[background-position] duration-700 motion-reduce:transition-none" style={{ backgroundImage: "url('/aurora-arrival.webp')", backgroundPosition: finished ? 'center center' : scene.imagePosition }} aria-hidden="true" />
     <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/80 via-black/10 to-black/50" aria-hidden="true" />
     <header className="flex items-start justify-between gap-4 p-4 sm:p-7">
-      <div className="rounded-md border-l-2 border-amber-300 bg-black/45 px-4 py-2 backdrop-blur-sm"><p className="text-xs font-bold uppercase tracking-[0.3em] text-amber-200">AstroColony</p><p className="text-xs uppercase tracking-[0.2em] text-white/80">Colonia Aurora-1 · Marte</p></div>
+      <div className="rounded-md border-l-2 border-amber-300 bg-black/45 px-4 py-2 backdrop-blur-sm"><p className="text-xs font-bold uppercase tracking-[0.3em] text-amber-200">AstroColony</p><p className="text-xs uppercase tracking-[0.2em] text-white/80">Colonia Aurora-1 · Marte</p><p className="mt-1 text-xs font-bold text-amber-200">Modo {mode === 'comandante' ? 'Comandante (10–12)' : 'Explorador (7–9)'}</p></div>
       <Link href="/game" className="inline-flex items-center gap-2 rounded-md bg-black/55 px-3 py-2 text-sm font-medium text-white/90 hover:bg-black/80"><SkipForward className="h-4 w-4" /> Saltar historia</Link>
     </header>
 
@@ -52,7 +54,7 @@ export default function IntroPage() {
       </> : <section className="mx-auto my-auto max-w-xl rounded-2xl border border-amber-200/40 bg-black/75 p-6 text-center shadow-2xl backdrop-blur-md sm:p-9">
         <p className="text-xs font-bold uppercase tracking-[0.25em] text-amber-300">Prólogo completado</p>
         <h1 className="mt-3 text-3xl font-bold">Tu historia empieza ahora</h1>
-        <p className="mt-3 text-white/80">Tu primera tarea: encender las luces del invernadero. Después, cuida a cuatro astronautas durante diez soles.</p>
+        <p className="mt-3 text-white/80">Entrarás como <strong className="text-amber-200">{mode === 'comandante' ? 'Comandante' : 'Explorador'}</strong>. Tu primera tarea: revisar la energía de Aurora-1 y cuidar a la tripulación.</p>
         <details className="mt-5 text-left text-sm text-white/80"><summary className="cursor-pointer py-2">Elegir ayudas de Astrobot</summary><ExplorerPreferences /></details>
         <Link href="/game" className="mt-6 inline-flex min-h-14 items-center gap-3 rounded-lg bg-amber-500 px-6 text-lg font-bold text-stone-950 hover:bg-amber-400"><Play className="h-5 w-5 fill-current" /> Entrar a la colonia <ArrowRight className="h-5 w-5" /></Link>
       </section>}

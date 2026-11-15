@@ -2,11 +2,13 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useSyncExternalStore } from 'react';
-import { FolderOpen, Play, Settings2, ShieldCheck, Sprout, X } from 'lucide-react';
+import { FolderOpen, Play, Settings2, ShieldCheck, Sprout, X, Volume2, Keyboard, Accessibility, Maximize2 } from 'lucide-react';
 import { ACTIVE_MISSION_STORAGE_KEY, MISSION_CHANGED_EVENT, useGameStore } from '@/stores/game.store';
 import { ExplorerPreferences } from '@/modules/adventure/presentation/ExplorerPreferences';
+import { useGameAudio } from '@/components/GameAudioProvider';
 
 const HORIZONTE_SAVE_KEY = 'astrocolony-horizonte-save-v1';
+const GAME_MODE_KEY = 'astrocolony-mode';
 
 function subscribeToSavedMission(onChange: () => void) {
   window.addEventListener('storage', onChange);
@@ -24,6 +26,8 @@ function savedMissionSnapshot() {
 export default function HomePage() {
   const router = useRouter();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<'controls' | 'audio' | 'accessibility'>('controls');
+  const { enabled: musicEnabled, volume, setEnabled: setMusicEnabled, setVolume } = useGameAudio();
   const hasSavedMission = useSyncExternalStore(subscribeToSavedMission, savedMissionSnapshot, () => false);
   const [menuBusy, setMenuBusy] = useState(false);
   const [menuError, setMenuError] = useState<string | null>(null);
@@ -32,11 +36,25 @@ export default function HomePage() {
 
   useEffect(() => {
     loadPreferences();
+    const savedMode = window.localStorage.getItem(GAME_MODE_KEY);
+    if (savedMode === 'explorador' || savedMode === 'comandante') setMode(savedMode);
   }, [loadPreferences]);
+
+  const chooseMode = (choice: 'explorador' | 'comandante') => {
+    setMode(choice);
+    window.localStorage.setItem(GAME_MODE_KEY, choice);
+  };
+
+  useEffect(() => {
+    if (!settingsOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') setSettingsOpen(false); };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [settingsOpen]);
 
   const beginMission = async () => {
     if (menuBusy) return;
-    window.localStorage.setItem('astrocolony-mode', mode);
+    window.localStorage.setItem(GAME_MODE_KEY, mode);
     setMenuBusy(true);
     setMenuError(null);
     await startNewMission();
@@ -52,7 +70,6 @@ export default function HomePage() {
 
   const continueMission = async () => {
     if (menuBusy) return;
-    window.localStorage.setItem('astrocolony-mode', mode);
     if (window.localStorage.getItem(HORIZONTE_SAVE_KEY)) {
       router.push('/game');
       return;
@@ -83,14 +100,13 @@ export default function HomePage() {
   };
 
   return <main className="fixed inset-0 overflow-hidden bg-[#0b0e14] text-[#f8f7f0]">
-    <section className="absolute inset-0 isolate flex flex-col items-center justify-between overflow-hidden bg-[#15181b] px-4 py-5 text-center sm:py-8">
-      <div className="absolute -inset-5 -z-30 bg-cover bg-center blur-xl" style={{ backgroundImage: "url('/astrocolony-home-hero.webp')" }} aria-hidden="true" />
-      <div className="absolute inset-0 -z-20 bg-contain bg-center bg-no-repeat" style={{ backgroundImage: "url('/astrocolony-home-hero.webp')" }} aria-hidden="true" />
+    <section className="home-screen absolute inset-0 isolate flex flex-col items-center justify-between overflow-y-auto bg-[#15181b] px-4 py-5 text-center sm:py-8">
+      <div className="home-hero-image fixed inset-0 -z-20" style={{ position: 'fixed', inset: 0, zIndex: -2, backgroundImage: "url('/astrocolony-home-hero.webp')", backgroundSize: 'cover', backgroundRepeat: 'no-repeat', pointerEvents: 'none' }} aria-hidden="true" />
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(8,11,19,0.24),rgba(8,11,19,0.12)_48%,rgba(8,11,19,0.55))]" aria-hidden="true" />
 
-      <div className="mx-auto my-auto w-full max-w-4xl py-6">
-        <h1 className="font-sans text-[clamp(2.5rem,7vw,6.2rem)] font-light uppercase tracking-[0.25em] leading-none text-[#fff9f2] drop-shadow-[0_4px_18px_#000]">HORIZONTE</h1>
-        <p className="mt-3 text-[clamp(0.6rem,1.4vw,1.1rem)] font-semibold tracking-[0.34em] text-[#f6eee8] drop-shadow-[0_2px_8px_#000]">MISIÓN DE ENTRENAMIENTO ESPACIAL</p>
+      <div className="home-content mx-auto my-auto w-full max-w-6xl py-6">
+        <h1 className="home-title font-sans font-semibold uppercase leading-none text-[#fff8eb]" style={{ textShadow: '0 0 32px rgba(255,188,115,.5), 0 7px 30px rgba(0,0,0,.95)' }}>HORIZONTE</h1>
+        <p className="mt-5 text-[clamp(0.7rem,1.4vw,1.2rem)] font-semibold tracking-[0.18em] text-[#fff4e9] drop-shadow-[0_2px_8px_#000] sm:tracking-[0.34em]">MISIÓN DE ENTRENAMIENTO ESPACIAL</p>
         <div className="mx-auto mt-9 h-px w-52 bg-gradient-to-r from-transparent via-[#ffd27a] to-transparent" aria-hidden="true" />
         <p className="mt-4 text-xs font-bold uppercase tracking-[0.28em] text-[#ffe0b3] drop-shadow-[0_2px_8px_#000]">Colonia Aurora-1 · Marte</p>
         <nav aria-label="Menú principal" className="mx-auto mt-8 flex w-full max-w-sm flex-col gap-3">
@@ -104,13 +120,17 @@ export default function HomePage() {
       <div className="w-full pb-3">
         <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.35em] text-[#f6eee8] drop-shadow-[0_2px_8px_#000]">Modo de juego</p>
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <button type="button" onClick={() => setMode('explorador')} aria-pressed={mode === 'explorador'} className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-5 font-bold backdrop-blur-sm ${mode === 'explorador' ? 'border-[#ffd27a] bg-[#6e371c]/80 text-white shadow-[0_0_18px_rgba(255,171,74,0.65)]' : 'border-white/60 bg-black/30 text-white'}`}><Sprout className="h-4 w-4" /> Explorador (7–9)</button>
-          <button type="button" onClick={() => setMode('comandante')} aria-pressed={mode === 'comandante'} className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-5 font-bold backdrop-blur-sm ${mode === 'comandante' ? 'border-[#ffd27a] bg-[#6e371c]/80 text-white shadow-[0_0_18px_rgba(255,171,74,0.65)]' : 'border-white/60 bg-black/30 text-white'}`}><ShieldCheck className="h-4 w-4" /> Comandante (10–12)</button>
+          <button type="button" onClick={() => chooseMode('explorador')} aria-pressed={mode === 'explorador'} className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-5 font-bold backdrop-blur-sm ${mode === 'explorador' ? 'border-[#ffd27a] bg-[#6e371c]/80 text-white shadow-[0_0_18px_rgba(255,171,74,0.65)]' : 'border-white/60 bg-black/30 text-white'}`}><Sprout className="h-4 w-4" /> Explorador (7–9)</button>
+          <button type="button" onClick={() => chooseMode('comandante')} aria-pressed={mode === 'comandante'} className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-5 font-bold backdrop-blur-sm ${mode === 'comandante' ? 'border-[#ffd27a] bg-[#6e371c]/80 text-white shadow-[0_0_18px_rgba(255,171,74,0.65)]' : 'border-white/60 bg-black/30 text-white'}`}><ShieldCheck className="h-4 w-4" /> Comandante (10–12)</button>
         </div>
       </div>
     </section>
 
-    {settingsOpen && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSettingsOpen(false); }}><section role="dialog" aria-modal="true" aria-labelledby="settings-title" className="w-full max-w-md rounded-3xl border border-orange-300/50 bg-[#151d2d] p-6 shadow-2xl"><div className="flex items-center justify-between"><h2 id="settings-title" className="text-xl font-bold text-white">Configuración</h2><button type="button" aria-label="Cerrar configuración" onClick={() => setSettingsOpen(false)} className="rounded-lg p-2 text-slate-200 hover:bg-slate-700"><X className="h-5 w-5" /></button></div><label className="mt-5 flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-slate-600 p-4 text-sm text-white"><span><strong>Reducir movimiento</strong><span className="mt-1 block text-slate-300">Detiene el giro automático y las animaciones de la colonia.</span></span><input type="checkbox" checked={reducedMotion} onChange={toggleReducedMotion} className="h-5 w-5 accent-orange-400" /></label><ExplorerPreferences /></section></div>}
+    {settingsOpen && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSettingsOpen(false); }}><section role="dialog" aria-modal="true" aria-labelledby="settings-title" className="flex max-h-[min(90dvh,680px)] w-full max-w-xl flex-col overflow-hidden rounded-3xl border border-orange-300/50 bg-[#151d2d] shadow-2xl"><div className="flex items-center justify-between border-b border-white/10 px-5 py-4 sm:px-7"><div><p className="text-xs font-bold uppercase tracking-[0.22em] text-orange-300">Horizonte</p><h2 id="settings-title" className="mt-1 text-2xl font-bold text-white">Configuración</h2></div><button type="button" aria-label="Cerrar configuración" onClick={() => setSettingsOpen(false)} className="rounded-lg p-2 text-slate-200 hover:bg-slate-700"><X className="h-5 w-5" /></button></div><div className="flex gap-1 overflow-x-auto border-b border-white/10 px-3 py-3 sm:px-5" role="tablist" aria-label="Opciones de configuración">{([{ id: 'controls', label: 'Controles', Icon: Keyboard }, { id: 'audio', label: 'Audio', Icon: Volume2 }, { id: 'accessibility', label: 'Accesibilidad', Icon: Accessibility }] as const).map(({ id, label, Icon }) => <button key={id} type="button" role="tab" aria-selected={settingsTab === id} onClick={() => setSettingsTab(id)} className={`flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-sm font-bold transition ${settingsTab === id ? 'bg-orange-400 text-slate-950' : 'text-slate-200 hover:bg-white/10'}`}><Icon className="h-4 w-4" />{label}</button>)}</div><div className="overflow-y-auto px-5 py-5 text-left sm:px-7">
+      {settingsTab === 'controls' && <div role="tabpanel" className="space-y-4"><p className="text-sm text-slate-300">Muévete por la colonia y acércate a los módulos para interactuar.</p><div className="grid gap-2 sm:grid-cols-2">{[['W A S D / Flechas', 'Caminar'], ['Ratón + arrastrar', 'Girar la cámara'], ['Espacio', 'Saltar'], ['E', 'Entrar, usar o salir'], ['V', 'Cambiar de cámara'], ['P / Tab', 'Panel de la base'], ['Esc', 'Pausar'], ['Rueda del ratón', 'Acercar o alejar']].map(([key, action]) => <div key={key} className="flex min-h-14 items-center justify-between gap-3 rounded-xl border border-slate-600/70 bg-slate-900/60 px-3 py-2"><span className="text-sm text-slate-200">{action}</span><kbd className="shrink-0 rounded-md border border-orange-300/40 bg-orange-300/10 px-2 py-1 text-xs font-bold text-orange-200">{key}</kbd></div>)}</div><p className="text-xs text-slate-400">En móvil aparecen controles táctiles dentro del juego.</p></div>}
+      {settingsTab === 'audio' && <div role="tabpanel" className="space-y-5"><div className="rounded-2xl border border-orange-300/30 bg-orange-300/10 p-4"><div className="flex items-center justify-between gap-4"><div><h3 className="font-bold text-white">Música espacial</h3><p className="mt-1 text-sm text-slate-300">Ambiente original y tranquilo durante la misión.</p></div><label className="relative inline-flex cursor-pointer items-center"><input type="checkbox" aria-label="Activar música espacial" checked={musicEnabled} onChange={event => setMusicEnabled(event.target.checked)} className="h-5 w-5 accent-orange-400" /></label></div></div><label className="block rounded-2xl border border-slate-600/70 p-4"><span className="flex justify-between gap-2 text-sm font-bold"><span>Volumen de música</span><span>{volume}%</span></span><input type="range" min="0" max="100" step="5" value={volume} onChange={event => setVolume(Number(event.target.value))} aria-label="Volumen de música" className="mt-4 w-full accent-orange-400" /></label><p className="text-xs text-slate-400">Si el navegador bloquea el audio, haz clic o pulsa una tecla para iniciarlo.</p></div>}
+      {settingsTab === 'accessibility' && <div role="tabpanel" className="space-y-4"><label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-slate-600 p-4 text-sm text-white"><span><strong>Reducir movimiento</strong><span className="mt-1 block text-slate-300">Reduce animaciones y giros automáticos en la aventura clásica.</span></span><input type="checkbox" checked={reducedMotion} onChange={toggleReducedMotion} className="h-5 w-5 accent-orange-400" /></label><button type="button" onClick={() => { if (!document.fullscreenElement) void document.documentElement.requestFullscreen?.(); else void document.exitFullscreen?.(); }} className="flex min-h-12 w-full items-center justify-between rounded-xl border border-slate-600 px-4 text-sm font-bold text-white hover:bg-white/10"><span>Pantalla completa</span><Maximize2 className="h-4 w-4" /></button><ExplorerPreferences /></div>}
+    </div></section></div>}
 
   </main>;
 }

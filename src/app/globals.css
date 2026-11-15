@@ -17,3 +17,38 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
+
+.home-screen {
+  min-height: 100%;
+  overscroll-behavior: contain;
+}
+
+.home-content {
+  flex-shrink: 0;
+}
+
+.home-hero-image {
+  background-position: center center;
+}
+
+.home-title {
+  max-width: 100%;
+  font-size: clamp(2rem, 8.5vw, 9rem);
+  letter-spacing: 0.075em;
+  white-space: nowrap;
+  transform: translate(1vw, -18px);
+}
+
+@media (max-width: 640px) {
+  .home-hero-image { background-position: 38% center; }
+  .home-title {
+    font-size: clamp(1.75rem, 8vw, 3.5rem);
+    letter-spacing: 0.04em;
+    transform: translateY(-8px);
+  }
+}
+
+@media (max-height: 700px) {
+  .home-content { padding-top: 16px; padding-bottom: 16px; }
+  .home-title { transform: translate(1vw, -8px); }
+}

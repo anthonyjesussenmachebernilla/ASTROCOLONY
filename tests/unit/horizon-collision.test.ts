@@ -6,6 +6,7 @@ type CollisionEngine = {
   blocked: (x: number, z: number) => boolean;
   resolveMove: (x: number, z: number, dx: number, dz: number) => { x: number; z: number };
   patrols: { x: number; z: number }[];
+  nearbyRobot: (x: number, z: number) => { id: number; dist: number } | null;
 };
 
 function loadCollisionEngine(): CollisionEngine {
@@ -42,5 +43,11 @@ describe('HORIZONTE world collisions', () => {
     expect(world.blocked(start.x, start.z)).toBe(true);
     expect(world.resolveMove(start.x, start.z, 0.2, 0).x).toBeGreaterThan(start.x);
     expect(world.resolveMove(start.x, start.z, -0.2, 0).x).toBe(start.x);
+  });
+
+  it('finds a robot only within conversation distance', () => {
+    const robot = world.patrols[0];
+    expect(world.nearbyRobot(robot.x + 1.4, robot.z)?.id).toBe(0);
+    expect(world.nearbyRobot(45, 40)).toBeNull();
   });
 });

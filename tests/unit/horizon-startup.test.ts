@@ -2,16 +2,19 @@ import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-function startDemo(failGraphics: boolean) {
+function startDemo(failGraphics: boolean, selectedMode: 'explorador' | 'comandante' = 'explorador', savedMode?: 'explorador' | 'comandante') {
   const html = readFileSync('public/horizonte/index.html', 'utf8');
   document.body.innerHTML = html.slice(html.indexOf('<body>') + 6, html.indexOf('</body>'));
   const scheduled: (() => void)[] = [];
   const navigate = vi.fn();
-  const engine = { start: vi.fn(), pause: vi.fn(), leave: vi.fn(), setSkin: vi.fn(), snapshot: () => ({}), getState: () => ({ pos: [0, 0, 19], yaw: 0, camera: 'third', storm: 0, stormTarget: 0 }) };
+  let tick: ((data: unknown) => void) | null = null;
+  const engine = { start: vi.fn(), pause: vi.fn(), leave: vi.fn(), setSkin: vi.fn(), getNearest: vi.fn((): { robot: { id: number }; inside: boolean } | null => null), restore: vi.fn(() => true), snapshot: () => ({}), getState: () => ({ pos: [0, 0, 19], yaw: 0, camera: 'third', storm: 0, stormTarget: 0 }) };
+  const stored = new Map<string, string>([['astrocolony-mode', selectedMode]]);
+  if (savedMode) stored.set('astrocolony-horizonte-save-v1', JSON.stringify({ version: 1, mode: savedMode, world: {}, step: 0, energy: 62, oxygen: 78, food: 54, shield: 68 }));
   const context = {
     document,
-    window: { addEventListener: vi.fn(), location: { search: '?autostart=1' }, parent: { location: { assign: navigate } }, MarsGfx: { skins: [{ id: 'explorer' }], stations: [], createDemo: () => { if (failGraphics) throw new Error('WebGL 2 no disponible'); return engine; } } },
-    localStorage: { getItem: () => null, setItem: vi.fn() },
+    window: { addEventListener: vi.fn(), location: { search: '?autostart=1' }, parent: { location: { assign: navigate } }, MarsGfx: { skins: [{ id: 'explorer' }], stations: [{ id: 'solar', x: 0, z: 0 }], createDemo: (_canvas: unknown, handlers: { onTick: (data: unknown) => void }) => { if (failGraphics) throw new Error('WebGL 2 no disponible'); tick = handlers.onTick; return engine; } } },
+    localStorage: { getItem: (key: string) => stored.get(key) ?? null, setItem: (key: string, value: string) => stored.set(key, value) },
     performance: { now: () => 1000 },
     URLSearchParams,
     fetch: () => new Promise(() => {}),
@@ -20,7 +23,7 @@ function startDemo(failGraphics: boolean) {
   };
   runInNewContext(readFileSync('public/horizonte/game.js', 'utf8'), context);
   scheduled.shift()?.();
-  return { engine, navigate };
+  return { engine, navigate, stored, tick: (data: unknown) => tick?.(data) };
 }
 
 afterEach(() => { document.body.innerHTML = ''; });
@@ -45,5 +48,36 @@ describe('inicio de HORIZONTE', () => {
     const fullGame = [...document.querySelectorAll<HTMLButtonElement>('#modalButtons button')].find((button) => button.textContent === 'ABRIR AVENTURA COMPLETA');
     expect(fullGame).toBeDefined(); fullGame?.click();
     expect(navigate).toHaveBeenCalledWith('/game/legacy');
+  });
+  it('shows the selected mode and restores the mode saved with a mission', () => {
+    startDemo(false, 'comandante');
+    expect(document.getElementById('modeBadge')).toHaveTextContent('Comandante');
+    document.body.innerHTML = '';
+    const { stored } = startDemo(false, 'explorador', 'comandante');
+    expect(document.getElementById('modeBadge')).toHaveTextContent('Comandante');
+    expect(stored.get('astrocolony-mode')).toBe('comandante');
+  });
+  it('lets the player ask a nearby robot for a hint and answer a question', () => {
+    const { engine } = startDemo(false);
+    engine.getNearest.mockReturnValue({ robot: { id: 0 }, inside: false });
+    document.getElementById('mobileInteract')?.click();
+    expect(document.getElementById('modalTitle')).toHaveTextContent('Luma');
+    [...document.querySelectorAll<HTMLButtonElement>('[data-robot-topic]')].find(button => button.textContent === 'Dame una pista')?.click();
+    expect(document.getElementById('robotReply')).toHaveTextContent('paneles solares');
+    [...document.querySelectorAll<HTMLButtonElement>('[data-robot-topic]')].find(button => button.textContent === 'Hazme una pregunta')?.click();
+    [...document.querySelectorAll<HTMLButtonElement>('#robotAnswers button')].find(button => button.textContent === 'Paneles solares')?.click();
+    expect(document.getElementById('robotReply')).toHaveTextContent('¡Correcto!');
+  });
+  it('keeps one nearby robot prompt without stacking greetings over it', () => {
+    const { tick } = startDemo(false);
+    const toast = document.getElementById('toast')!;
+    toast.textContent = '';
+    const frame = (id: number) => ({ interior: null, nearest: { robot: { id }, station: null, dist: 2 }, markers: {}, skyMarkers: [], pos: [0, 0, 19], fps: 60 });
+    tick(frame(1));
+    expect(document.getElementById('interiorName')).toHaveTextContent('Nova');
+    tick(frame(2));
+    expect(document.getElementById('interiorName')).toHaveTextContent('Atlas');
+    expect(document.getElementById('interiorHint')).toHaveTextContent('Pulsa E para conversar');
+    expect(toast.textContent).toBe('');
   });
 });

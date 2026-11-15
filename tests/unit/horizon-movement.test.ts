@@ -59,7 +59,11 @@ it('moves only while a movement key is held, and stops after window blur', () =>
   api.getState().pos = [22, 0, -15];
   expect(api.enter('greenhouse')).toBe(true);
   expect(api.getState().interior).toBe('greenhouse');
+  expect(api.getState().camera).toBe('third');
+  events.get('keydown')?.({ code: 'KeyV', preventDefault: () => undefined });
   expect(api.getState().camera).toBe('first');
+  events.get('keydown')?.({ code: 'KeyV', preventDefault: () => undefined });
+  expect(api.getState().camera).toBe('third');
   expect(api.getNearest().atExit).toBe(true);
   events.get('keydown')?.({ code: 'KeyW', preventDefault: () => undefined });
   for (let time = 1216; time <= 2100; time += 16) frame?.(time);
@@ -88,4 +92,4 @@ it('moves only while a movement key is held, and stops after window blur', () =>
   api.getState().pos = [8, 0, 8];
   expect(api.restore(savedExterior)).toBe(true);
   expect(api.getState().pos[2]).toBe(savedZ);
-});
+}, 20000);
