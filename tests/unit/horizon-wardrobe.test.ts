@@ -25,18 +25,20 @@ it('awards coins for objectives and keeps purchased suits after reloading', () =
     const state = { pos: [0, 0, 19], yaw: 0, avatarYaw: 0, camera: 'third', interior: null, storm: 0, stormTarget: 0, skin: 'explorer' };
     let handlers: { onInteract?: (value: unknown) => void } = {};
     const engine = {
-      start: () => undefined, pause: () => undefined, leave: () => false, getState: () => state,
+      setStorm: () => undefined, start: () => undefined, pause: () => undefined, leave: () => false, getState: () => state,
       snapshot: () => ({ ...state, pos: [...state.pos] }),
       restore: (saved: typeof state) => { Object.assign(state, saved); return true; },
       setSkin: (id: string) => { state.skin = id; return true; },
     };
     const gameWindow = window as unknown as Window & { MarsGfx: unknown };
     gameWindow.MarsGfx = { skins, stations: [], createDemo: (_canvas: unknown, events: typeof handlers) => { handlers = events; return engine; } };
-    runInNewContext(source, {
+    const context = {
       window: gameWindow, document, localStorage: storage, performance: { now: () => Date.now() },
       fetch: async () => ({ ok: true, json: async () => ({ snapshot: null }) }),
       setTimeout, clearTimeout, setInterval, URLSearchParams, console,
-    });
+    };
+    runInNewContext(readFileSync('public/horizonte/campaign.js', 'utf8'), context);
+    runInNewContext(source, context);
     document.getElementById('start')!.click();
     vi.advanceTimersByTime(70);
     return { handlers, state };
@@ -44,12 +46,17 @@ it('awards coins for objectives and keeps purchased suits after reloading', () =
 
   const first = boot();
   const interact = (id: string) => first.handlers.onInteract?.({ inside: true, station: { id }, target: { id: 'console' }, dist: 1, atExit: false });
+  first.handlers.onInteract?.({ inside: true, station: { id: 'solar' }, target: { id: 'array', name: 'Matriz', detail: 'Polvo' }, dist: 1 });
+  [...document.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent === 'REGISTRAR HALLAZGO')!.click();
   interact('solar');
+  [...document.querySelectorAll<HTMLButtonElement>('#modalButtons button')].find(button => button.textContent === 'Terminar el sol')!.click();
   expect(document.getElementById('coinCount')?.textContent).toBe('25');
   interact('regulator');
+  [...document.querySelectorAll<HTMLButtonElement>('#modalButtons button')].find(button => button.textContent === 'Terminar el sol')!.click();
   expect(document.getElementById('coinCount')?.textContent).toBe('60');
   interact('energy');
-  document.getElementById('balance')!.click();
+  document.querySelector<HTMLButtonElement>('[data-campaign-choice=balanced]')!.click();
+  [...document.querySelectorAll<HTMLButtonElement>('#modalButtons button')].find(button => button.textContent === 'Terminar el sol')!.click();
   expect(document.getElementById('coinCount')?.textContent).toBe('110');
   document.getElementById('wardrobe')!.click();
   (document.querySelector('[data-skin="botanic"]') as HTMLButtonElement).click();

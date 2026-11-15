@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { getServerEnv } from '@/lib/env';
+import { SOLAR_DUST_DISCOVERY } from '@/data/scientific-sources/mars-discoveries';
 
 const ApodSchema = z.object({
   title: z.string(),
@@ -20,6 +21,7 @@ const ImageLibrarySchema = z.object({
             z.object({
               nasa_id: z.string(),
               title: z.string(),
+              description: z.string().nullish(),
               date_created: z.string(),
               secondary_creator: z.string().nullish(),
               center: z.string().nullish(),
@@ -77,6 +79,37 @@ async function getJson(url: string): Promise<unknown> {
 }
 
 export class NasaMediaService {
+  /** A reviewed photograph for the solar-panel interaction; never a random search hit. */
+  getSolarDustDiscovery() {
+    return cached('discovery:solar-dust', async () => {
+      try {
+        const entry = SOLAR_DUST_DISCOVERY;
+        const parsed = ImageLibrarySchema.safeParse(await getJson(
+          `https://images-api.nasa.gov/search?nasa_id=${entry.nasaId}&media_type=image`,
+        ));
+        if (!parsed.success) return null;
+        const item = parsed.data.collection.items.find((item) => item.data[0].nasa_id === entry.nasaId);
+        if (!item) return null;
+        const meta = item.data[0];
+        const link = item.links?.find((link) => {
+          const url = new URL(link.href);
+          return link.render === 'image' && url.protocol === 'https:' && url.hostname === 'images-assets.nasa.gov';
+        });
+        if (!link || !meta.description?.trim()) return null;
+        return {
+          ...entry,
+          imageUrl: link.href,
+          originalTitle: meta.title,
+          originalDescription: meta.description,
+          publishedAt: meta.date_created.slice(0, 10),
+          credit: meta.secondary_creator?.trim() || 'NASA/JPL-Caltech',
+        };
+      } catch {
+        return null;
+      }
+    });
+  }
+
   /** Imagen Astronómica del Día (APOD). Devuelve null si NASA no responde: nunca inventamos datos. */
   getApod(): Promise<ApodDto | null> {
     return cached('apod', async () => {

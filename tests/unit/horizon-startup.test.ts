@@ -8,7 +8,7 @@ function startDemo(failGraphics: boolean, selectedMode: 'explorador' | 'comandan
   const scheduled: (() => void)[] = [];
   const navigate = vi.fn();
   let tick: ((data: unknown) => void) | null = null;
-  const engine = { start: vi.fn(), pause: vi.fn(), leave: vi.fn(), setSkin: vi.fn(), getNearest: vi.fn((): { robot: { id: number }; inside: boolean } | null => null), restore: vi.fn(() => true), snapshot: () => ({}), getState: () => ({ pos: [0, 0, 19], yaw: 0, camera: 'third', storm: 0, stormTarget: 0 }) };
+  const engine = { setStorm: vi.fn(), start: vi.fn(), pause: vi.fn(), leave: vi.fn(), setSkin: vi.fn(), getNearest: vi.fn((): { robot: { id: number }; inside: boolean } | null => null), restore: vi.fn(() => true), snapshot: () => ({}), getState: () => ({ pos: [0, 0, 19], yaw: 0, camera: 'third', storm: 0, stormTarget: 0 }) };
   const stored = new Map<string, string>([['astrocolony-mode', selectedMode]]);
   if (panelCollapsed) stored.set('astrocolony-mission-panel-collapsed', 'true');
   if (savedMode) stored.set('astrocolony-horizonte-save-v1', JSON.stringify({ version: 1, mode: savedMode, world: {}, step: 0, energy: 62, oxygen: 78, food: 54, shield: 68 }));
@@ -22,6 +22,7 @@ function startDemo(failGraphics: boolean, selectedMode: 'explorador' | 'comandan
     setTimeout: (callback: () => void) => { scheduled.push(callback); return scheduled.length; },
     clearTimeout: vi.fn(), setInterval: vi.fn(), console: { error: vi.fn() },
   };
+  runInNewContext(readFileSync('public/horizonte/campaign.js', 'utf8'), context);
   runInNewContext(readFileSync('public/horizonte/game.js', 'utf8'), context);
   scheduled.shift()?.();
   return { engine, navigate, stored, tick: (data: unknown) => tick?.(data) };
@@ -46,7 +47,7 @@ describe('inicio de HORIZONTE', () => {
     expect(document.getElementById('menu')).toHaveClass('hidden');
     expect(document.getElementById('gameUI')).not.toHaveClass('hidden');
     document.getElementById('pause')?.click();
-    const fullGame = [...document.querySelectorAll<HTMLButtonElement>('#modalButtons button')].find((button) => button.textContent === 'ABRIR AVENTURA COMPLETA');
+    const fullGame = [...document.querySelectorAll<HTMLButtonElement>('#modalButtons button')].find((button) => button.textContent === 'ABRIR SIMULACIÓN ANTERIOR');
     expect(fullGame).toBeDefined(); fullGame?.click();
     expect(navigate).toHaveBeenCalledWith('/game/legacy');
   });
