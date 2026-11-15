@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-function startDemo(failGraphics: boolean, selectedMode: 'explorador' | 'comandante' = 'explorador', savedMode?: 'explorador' | 'comandante') {
+function startDemo(failGraphics: boolean, selectedMode: 'explorador' | 'comandante' = 'explorador', savedMode?: 'explorador' | 'comandante', panelCollapsed = false) {
   const html = readFileSync('public/horizonte/index.html', 'utf8');
   document.body.innerHTML = html.slice(html.indexOf('<body>') + 6, html.indexOf('</body>'));
   const scheduled: (() => void)[] = [];
@@ -10,6 +10,7 @@ function startDemo(failGraphics: boolean, selectedMode: 'explorador' | 'comandan
   let tick: ((data: unknown) => void) | null = null;
   const engine = { start: vi.fn(), pause: vi.fn(), leave: vi.fn(), setSkin: vi.fn(), getNearest: vi.fn((): { robot: { id: number }; inside: boolean } | null => null), restore: vi.fn(() => true), snapshot: () => ({}), getState: () => ({ pos: [0, 0, 19], yaw: 0, camera: 'third', storm: 0, stormTarget: 0 }) };
   const stored = new Map<string, string>([['astrocolony-mode', selectedMode]]);
+  if (panelCollapsed) stored.set('astrocolony-mission-panel-collapsed', 'true');
   if (savedMode) stored.set('astrocolony-horizonte-save-v1', JSON.stringify({ version: 1, mode: savedMode, world: {}, step: 0, energy: 62, oxygen: 78, food: 54, shield: 68 }));
   const context = {
     document,
@@ -79,5 +80,21 @@ describe('inicio de HORIZONTE', () => {
     expect(document.getElementById('interiorName')).toHaveTextContent('Atlas');
     expect(document.getElementById('interiorHint')).toHaveTextContent('Pulsa E para conversar');
     expect(toast.textContent).toBe('');
+  });
+  it('hides and restores the mission panel with a persistent arrow button', () => {
+    const { stored } = startDemo(false);
+    const toggle = document.getElementById('missionToggle')!;
+    const details = document.getElementById('missionDetails')!;
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    toggle.click();
+    expect(details).toHaveAttribute('hidden');
+    expect(toggle).toHaveAttribute('aria-label', 'Mostrar misión');
+    expect(stored.get('astrocolony-mission-panel-collapsed')).toBe('true');
+    toggle.click();
+    expect(details).not.toHaveAttribute('hidden');
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    document.body.innerHTML = '';
+    startDemo(false, 'explorador', undefined, true);
+    expect(document.getElementById('missionDetails')).toHaveAttribute('hidden');
   });
 });

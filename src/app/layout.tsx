@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'AstroColony: Mission Survival | NASA Space Apps',
+  title: 'HORIZONTE',
   description:
     'Construye tu base. Protege a tu tripulación. Sobrevive en otro mundo. Videojuego educativo sobre decisiones reales de ingeniería espacial.',
 };
