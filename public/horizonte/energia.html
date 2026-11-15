@@ -1,0 +1,376 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>HORIZONTE — Centro de Energía 3D</title>
+<style>
+:root{color-scheme:dark;--text:#eef1ff;--muted:#b9bfd9;--cyan:#a78bfa;--amber:#ffcf8c;--gold:#f6b66f;--emerald:#83dfb0;--line:#b9b2e832;--panel:rgba(16,15,30,.86);font-family:Inter,'Segoe UI',Arial,sans-serif}
+*{box-sizing:border-box}html,body{height:100%;width:100%;margin:0;overflow:hidden;background:#121020;color:var(--text)}button,input{font:inherit}button{cursor:pointer;color:inherit}button:focus-visible,input:focus-visible{outline:2px solid #ffca7b;outline-offset:3px}
+#scene{position:fixed;inset:0;width:100%;height:100%;touch-action:none;display:block;background:linear-gradient(180deg,#241f3a,#352c52 45%,#1a162a 90%)}
+.atmosphere{pointer-events:none;position:fixed;inset:0;background:radial-gradient(circle at 72% 18%,rgba(167,139,250,.15),transparent 42%),linear-gradient(180deg,rgba(10,12,24,.22),transparent 24%,rgba(8,10,20,.56));z-index:1}
+#app{position:fixed;inset:0;pointer-events:none;z-index:4;user-select:none}
+.hud{pointer-events:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;backdrop-filter:blur(14px);box-shadow:0 16px 38px rgba(0,0,0,.42)}
+#top{position:absolute;top:15px;left:18px;right:18px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;pointer-events:none}
+.logo{padding:11px 16px;min-width:215px}.logo b{display:block;font-size:25px;letter-spacing:.26em;font-weight:500}.logo i{display:block;height:1px;background:linear-gradient(90deg,#a78bfa,#ffcf8c,transparent);margin:6px 0 4px}.logo small{display:block;font-size:10px;letter-spacing:.21em;color:#d6ccf7;font-weight:700}
+.centerMode{padding:10px 18px;text-align:center;font-size:11px;letter-spacing:.14em;color:#cfd4ec;min-width:240px}.centerMode strong{display:block;margin-top:3px;font-size:13px;color:var(--amber);letter-spacing:.12em}
+.resources{display:flex;gap:10px;padding:9px 12px}.resource{min-width:74px;padding:3px 7px;border-radius:9px;background:rgba(255,255,255,.04);text-align:center}.resource small{display:block;font-size:10px;color:#c2c7e0}.resource b{display:block;font-size:16px;margin-top:2px;color:#fff}
+#mission{position:absolute;top:105px;left:18px;width:295px;padding:15px}
+.eyebrow{font-size:11px;letter-spacing:.15em;color:#c4b5fd;font-weight:800}#mission h2{margin:7px 0 6px;font-size:18px}#mission .desc{margin:0 0 11px;font-size:12px;line-height:1.5;color:#d4d8eb}
+.task{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:9px;font-size:12px;margin-bottom:6px;background:rgba(255,255,255,.03);border:1px solid transparent;cursor:pointer}.task:hover{border-color:#a78bfa66}.task .dot{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:800;background:#2f2b4a;color:#cfd4ec;flex:0 0 20px}
+.task.done{background:rgba(131,223,176,.11);border-color:#83dfb044}.task.done .dot{background:#347a58;color:#e6fff2}.task.current{background:rgba(167,139,250,.16);border-color:#a78bfa88}.task.current .dot{background:#a78bfa;color:#17122b}
+#stationUI{position:absolute;top:105px;right:18px;width:335px;max-height:calc(100vh - 205px);overflow-y:auto;padding:16px;display:none}
+#stationUI.active{display:block}
+.cap{font-size:10px;letter-spacing:.16em;color:#c4b5fd;font-weight:800}#stationUI h2{margin:6px 0 7px;font-size:19px}#workIntro{margin:0 0 12px;font-size:12.5px;line-height:1.5;color:#d8dcf0}
+.controlGroup{margin-bottom:13px;padding:10px 11px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}.controlGroup label{display:block;font-size:11.5px;color:#dde1f5;margin-bottom:7px;font-weight:600}
+.pillRow{display:flex;flex-wrap:wrap;gap:7px}.pillRow button{flex:1 1 auto;padding:8px 10px;border-radius:9px;border:1px solid #9e96d44a;background:#1f1c36;color:#e9ecff;font-size:12px;font-weight:600;transition:.15s}.pillRow button:hover{border-color:#c4b5fd}.pillRow button.active{background:linear-gradient(135deg,#7c3aed,#a78bfa);border-color:#ddd6fe;color:#fff}
+input[type=range]{width:100%;accent-color:#a78bfa;cursor:pointer}.note{margin-top:6px;font-size:11px;color:#aeb5d4;line-height:1.4}
+.statusText{padding:9px 10px;border-radius:9px;background:rgba(255,255,255,.04);font-size:12px;color:#ffdfb3;line-height:1.45;margin-top:4px}
+.btn{padding:10px 14px;border-radius:10px;border:1px solid #b5aee844;background:rgba(28,25,49,.9);color:#f3f4ff;font-size:12px;font-weight:700;letter-spacing:.04em;transition:.15s}.btn:hover{border-color:#c4b5fd;transform:translateY(-1px)}.btn.gold{background:linear-gradient(135deg,#d98a3c,#f0b36a);border-color:#ffe0ad;color:#1b1208}.btn.small{background:rgba(255,255,255,.06);font-weight:600}
+#hotspots{position:fixed;inset:0;pointer-events:none;z-index:5}
+.hotspot{position:absolute;transform:translate(-50%,-50%);pointer-events:auto;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:5px;padding:0}.hotspot .diamond{width:34px;height:34px;transform:rotate(45deg);border-radius:7px;background:rgba(20,18,38,.92);border:2px solid #ffcf8c;display:grid;place-items:center;box-shadow:0 6px 20px rgba(0,0,0,.55)}.hotspot .diamond em{transform:rotate(-45deg);font-style:normal;font-size:14px;color:#ffcf8c}.hotspot label{padding:4px 9px;border-radius:7px;background:rgba(14,13,27,.9);border:1px solid #b9b2e844;font-size:11px;font-weight:800;letter-spacing:.07em;color:#f5f3ff;white-space:nowrap}
+#bottom{position:absolute;left:18px;right:18px;bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;pointer-events:none}
+.legend{padding:9px 13px;font-size:11.5px;color:#cfd4ec;display:flex;align-items:center;gap:8px}.key{padding:2px 7px;border-radius:6px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);font-weight:700;font-size:10.5px;color:#fff}
+.buttons{display:flex;gap:8px;pointer-events:auto}
+#bot{position:absolute;right:18px;bottom:68px;width:335px;padding:11px 13px;display:flex;align-items:center;gap:12px}
+.botHead{flex:0 0 48px;height:48px;border-radius:16px;border:2px solid #a78bfa;background:#16132b;display:grid;place-items:center}.botEyes{width:32px;height:22px;display:flex;justify-content:space-around;align-items:center}.botEyes i{width:8px;height:12px;border-radius:4px;background:#c4b5fd;box-shadow:0 0 10px #a78bfa}
+#bot b{display:block;font-size:11px;letter-spacing:.1em;color:#c4b5fd;margin-bottom:3px}#bot p{margin:0;font-size:12px;line-height:1.45;color:#e3e6f7}
+#complete{position:fixed;inset:0;z-index:90;background:rgba(8,8,18,.78);display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px);padding:20px}
+.completeCard{width:min(520px,92vw);padding:30px;text-align:center;border:1px solid #a78bfa88}.completeCard h2{font-size:28px;color:#e9e4ff;margin:8px 0 10px}
+.toast{position:fixed;z-index:85;left:50%;top:88px;transform:translateX(-50%);padding:10px 16px;border-radius:9px;background:#1e1a38ee;border:1px solid #a78bfa88;opacity:0;transition:.2s;color:#f5f3ff;font-size:13px;text-align:center;max-width:64vw;pointer-events:none}.toast.show{opacity:1}
+@media(max-width:900px){#mission{width:230px}#stationUI{width:270px}.centerMode{display:none}}
+@media(max-width:700px){#mission,#bot,.legend{display:none}#stationUI{right:10px;width:min(280px,86vw);top:78px}.resources{display:none}}
+</style></head><body>
+<canvas id="scene" aria-label="Estación 3D del Centro de Energía"></canvas>
+<div class="atmosphere"></div>
+<div id="app">
+ <header id="top">
+  <div class="logo hud"><b>HORIZONTE</b><i></i><small>COLONIA AURORA–1 · CENTRO DE ENERGÍA</small></div>
+  <div class="centerMode hud">CÁMARA <strong id="modeLabel">PRIMERA PERSONA · MANTENIMIENTO</strong></div>
+  <div class="resources hud">
+   <div class="resource"><small>ϟ Energía</small><b id="energy">62%</b></div>
+   <div class="resource"><small>💧 Oxígeno</small><b id="oxygen">78%</b></div>
+   <div class="resource"><small>🌿 Alimentos</small><b id="food">54%</b></div>
+   <div class="resource"><small>⬡ Blindaje</small><b id="shield">68%</b></div>
+  </div>
+ </header>
+ <aside id="mission" class="hud">
+  <div class="eyebrow">◉ MISIÓN · RED ELÉCTRICA</div>
+  <h2 id="missionTitle">Estabilizar reserva de baterías</h2>
+  <p class="desc" id="missionDesc">Asegura la reserva eléctrica, balancea los buses de la colonia y sincroniza el disyuntor principal.</p>
+  <div id="tasks"></div>
+  <div style="border-top:1px solid #fff2;padding-top:9px;font-size:10px;color:#b9bfd9">Prototipo didáctico: lecturas y cargas eléctricas simuladas.</div>
+ </aside>
+ <div id="hotspots"></div>
+ <div id="stationUI" class="hud active">
+  <div class="cap">ESTACIÓN DE TRABAJO · PRIMERA PERSONA</div>
+  <h2 id="workTitle">RESERVA DE ENERGÍA</h2>
+  <p id="workIntro"></p>
+  <div id="workControls"></div>
+  <div class="statusText" id="workFeedback">Manipula los interruptores y ajusta la distribución.</div>
+  <button class="btn gold" id="verify" style="width:100%;margin-top:10px">✓ COMPROBAR SISTEMA</button>
+  <button class="btn small" id="exitWork" style="width:100%;margin-top:7px">← Volver a la colonia</button>
+ </div>
+ <div id="bottom">
+  <div class="legend hud"><span class="key">Arrastrar</span> mirar <span class="key">E</span> comprobar <span class="key">ESC</span> salir</div>
+  <div class="buttons">
+   <button class="btn" id="focus">⌖ VER EQUIPO</button>
+   <button class="btn gold" id="interact">E · COMPROBAR</button>
+   <button class="btn" id="back">← REGRESAR</button>
+  </div>
+ </div>
+ <div id="bot" class="hud">
+  <div class="botHead"><div class="botEyes"><i></i><i></i></div></div>
+  <div><b>ASTROBOT · INGENIERÍA ELÉCTRICA</b><p id="botText">Revisa el banco de reserva y protege el suministro de soporte vital.</p></div>
+ </div>
+ <div id="toast" class="toast hud" role="status" aria-live="polite"></div>
+ <section id="complete">
+  <div class="completeCard hud">
+   <div style="font-size:44px;color:#83dfb0">✓</div>
+   <h2>¡Centro de energía estabilizado!</h2>
+   <p style="line-height:1.65;color:#dfe3f7">Protegiste la reserva de emergencia, balanceaste el reparto eléctrico entre módulos y sincronizaste el disyuntor principal sin sobrecargar la red.</p>
+   <div id="endStats" style="margin:16px 0;color:#ffcf8c;font-weight:700"></div>
+   <button class="btn gold" id="accept">✓ REGRESAR A LA COLONIA</button>
+   <button class="btn" id="restart" style="margin-left:8px">REPETIR PRÁCTICA</button>
+  </div>
+ </section>
+</div>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id);
+const qa=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const embedded=new URLSearchParams(location.search).get('embed')==='1';
+function notify(status){if(embedded&&parent!==window)parent.postMessage({type:'HORIZONTE_MAINTENANCE',task:'energy',status},location.origin)}
+
+const stepNames=['Estabilizar reserva de baterías','Balancear distribución eléctrica','Sincronizar disyuntor principal'];
+const stepIds=['reserve','distribution','sync'];
+const stepMeta={
+ reserve:{title:'RESERVA DE ENERGÍA',mission:'Estabilizar reserva de baterías',desc:'Una reserva estable protege el soporte vital durante una avería o tormenta.'},
+ distribution:{title:'DISTRIBUCIÓN ELÉCTRICA',mission:'Balancear distribución eléctrica',desc:'Cada módulo recibe una fracción de la red sin superar el 100% de capacidad.'},
+ sync:{title:'DISYUNTOR PRINCIPAL',mission:'Sincronizar disyuntor principal',desc:'Selecciona el modo operativo equilibrado y cierra el disyuntor de salida.'}
+};
+
+const initial=()=>({
+ step:0,
+ station:'reserve',
+ view:{yaw:0,pitch:0},
+ stats:{energy:62,oxygen:78,food:54,shield:68},
+ work:{isolate:false,backup:false,charge:48,life:30,greenhouse:25,shieldBus:20,mode:null,breaker:false},
+ talk:'Revisa el banco de reserva y protege el suministro de soporte vital.'
+});
+
+let S=initial(),toastTimer=0,viewDrag=null,lastTime=performance.now(),lastMarker=0;
+function toast(msg){const b=$('toast');b.textContent=msg;b.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>b.classList.remove('show'),2500)}
+
+function refreshUI(){
+ ['energy','oxygen','food','shield'].forEach(k=>$(k).textContent=S.stats[k]+'%');
+ const meta=stepMeta[S.station];
+ $('missionTitle').textContent=S.step>=3?'¡Red eléctrica estabilizada!':meta.mission;
+ $('missionDesc').textContent=meta.desc;
+ $('botText').textContent=S.talk;
+ let html='';
+ for(let i=0;i<stepNames.length;i++){
+  const done=i<S.step,cur=S.station===stepIds[i];
+  html+=`<div class="task ${done?'done':cur?'current':''}" data-idx="${i}"><span class="dot">${done?'✓':i+1}</span><span>${stepNames[i]}</span></div>`;
+ }
+ $('tasks').innerHTML=html;
+ $('tasks').querySelectorAll('[data-idx]').forEach(el=>el.onclick=()=>{
+  const idx=+el.dataset.idx;
+  S.station=stepIds[idx];
+  S.talk=stepMeta[S.station].desc;
+  refreshUI();renderWork();
+ });
+}
+
+function btn(id,label,active=false){return `<button type="button" class="${active?'active':''}" data-act="${id}">${label}</button>`}
+
+function renderWork(){
+ const w=S.work,id=S.station;
+ $('workTitle').textContent=stepMeta[id].title;
+ $('workFeedback').textContent='Manipula los controles o indicadores 3D y comprueba el sistema.';
+ let c='';
+ if(id==='reserve'){
+  $('workIntro').textContent='Aísla la línea auxiliar con fallos, activa el banco de respaldo y fija la carga de reserva en un rango seguro.';
+  c=`<div class="controlGroup"><label>PROTECCIÓN DE RESERVA</label><div class="pillRow">${btn('isolate',w.isolate?'LÍNEA AISLADA':'AISLAR LÍNEA',w.isolate)}${btn('backup',w.backup?'RESERVA ACTIVA':'ACTIVAR RESERVA',w.backup)}</div><div class="note">También puedes pulsar los interruptores directamente sobre el tablero 3D.</div></div>
+     <div class="controlGroup"><label>Carga objetivo del banco: <b id="chargeVal">${w.charge}%</b></label><input id="chargeSlider" type="range" min="20" max="95" value="${w.charge}"><div class="note">Objetivo recomendado: 70–85% para proteger oxígeno sin sobrecargar celdas.</div></div>`;
+ }else if(id==='distribution'){
+  const total=w.life+w.greenhouse+w.shieldBus;
+  $('workIntro').textContent='Reparte la capacidad eléctrica entre los tres buses principales sin superar el 100% total.';
+  c=`<div class="controlGroup"><label>Soporte vital (Oxígeno): <b id="lifeVal">${w.life}%</b></label><input id="lifeSlider" type="range" min="15" max="60" value="${w.life}"><div class="note">Mínimo recomendado: 35%.</div></div>
+     <div class="controlGroup"><label>Invernadero y agua: <b id="greenVal">${w.greenhouse}%</b></label><input id="greenSlider" type="range" min="15" max="50" value="${w.greenhouse}"><div class="note">Mínimo recomendado: 25%.</div></div>
+     <div class="controlGroup"><label>Blindaje y comunicaciones: <b id="shieldVal">${w.shieldBus}%</b></label><input id="shieldSlider" type="range" min="15" max="50" value="${w.shieldBus}"><div class="note">Mínimo recomendado: 20%.</div></div>
+     <div class="controlGroup"><label>Carga total asignada</label><div id="totalLoad" style="font-size:22px;font-weight:800;color:${total>100?'#ff9e9e':total>=90?'#83dfb0':'#ffcf8c'}">${total}% / 100%</div><div class="note">Mantén el total entre 90% y 100% sin sobrecarga.</div></div>`;
+ }else{
+  $('workIntro').textContent='Elige el perfil de operación para toda Aurora-1 y cierra el disyuntor principal.';
+  c=`<div class="controlGroup"><label>PERFIL DE RED</label><div class="pillRow">${btn('modeeco','Ahorro crítico',w.mode==='eco')}${btn('modebalanced','Distribución equilibrada',w.mode==='balanced')}${btn('modeover','Sobrecarga máxima',w.mode==='over')}</div></div>
+     <div class="controlGroup"><label>DISYUNTOR DE SALIDA</label><div class="pillRow">${btn('breaker',w.breaker?'DISYUNTOR CONECTADO':'CONECTAR DISYUNTOR',w.breaker)}</div><div class="note">Un perfil equilibrado evita caídas en soporte vital y cultivos.</div></div>`;
+ }
+ $('workControls').innerHTML=c;
+ qa('[data-act]').forEach(el=>el.onclick=()=>{
+  const a=el.dataset.act;
+  if(a==='isolate')w.isolate=!w.isolate;
+  else if(a==='backup')w.backup=!w.backup;
+  else if(a==='breaker')w.breaker=!w.breaker;
+  else if(a.startsWith('mode')){w.mode=a.replace('mode','');w.breaker=false}
+  renderWork();
+ });
+ const bind=(sliderId,key,valId)=>{
+  const el=$(sliderId);if(!el)return;
+  el.oninput=ev=>{
+   w[key]=+ev.target.value;
+   $(valId).textContent=w[key]+'%';
+   if(id==='distribution'){
+    const total=w.life+w.greenhouse+w.shieldBus;
+    const tl=$('totalLoad');
+    if(tl){tl.textContent=`${total}% / 100%`;tl.style.color=total>100?'#ff9e9e':total>=90?'#83dfb0':'#ffcf8c';}
+   }
+  };
+ };
+ bind('chargeSlider','charge','chargeVal');
+ bind('lifeSlider','life','lifeVal');
+ bind('greenSlider','greenhouse','greenVal');
+ bind('shieldSlider','shieldBus','shieldVal');
+}
+
+function verify(){
+ const w=S.work,id=S.station;
+ let ok=false,msg='';
+ if(id==='reserve'){
+  ok=w.isolate&&w.backup&&w.charge>=70&&w.charge<=85;
+  msg='Aísla la línea auxiliar, activa la reserva y ajusta la carga entre 70% y 85%.';
+ }else if(id==='distribution'){
+  const total=w.life+w.greenhouse+w.shieldBus;
+  ok=w.life>=35&&w.greenhouse>=25&&w.shieldBus>=20&&total>=90&&total<=100;
+  msg='Asigna al menos 35% a Oxígeno, 25% a Invernadero, 20% a Blindaje y un total de 90–100%.';
+ }else{
+  ok=w.mode==='balanced'&&w.breaker;
+  msg='Selecciona "Distribución equilibrada" y conecta el disyuntor principal.';
+ }
+ if(!ok){$('workFeedback').textContent='⚠ '+msg;toast('Ajusta los parámetros antes de confirmar.');return;}
+ $('workFeedback').textContent='✓ Parámetros eléctricos verificados.';
+ const idx=stepIds.indexOf(id);
+ if(S.step<=idx)S.step=idx+1;
+ if(id==='reserve'){S.stats.energy=72;S.stats.oxygen=82;S.talk='¡Reserva asegurada! Ahora balancea la carga entre los módulos.'}
+ if(id==='distribution'){S.stats.energy=77;S.stats.oxygen=84;S.stats.shield=74;S.talk='¡Distribución estable! Solo falta sincronizar el disyuntor principal.'}
+ if(id==='sync'){S.stats.energy=82;S.stats.oxygen=85;S.talk='¡Centro de energía estabilizado! Toda la colonia recibe flujo limpio.'}
+ refreshUI();
+ if(S.step>=3&&id==='sync'){
+  $('endStats').textContent=`Energía ${S.stats.energy}% · Oxígeno ${S.stats.oxygen}% · Blindaje ${S.stats.shield}%`;
+  $('complete').style.display='flex';
+  return;
+ }
+ const nextIdx=Math.min(idx+1,stepIds.length-1);
+ S.station=stepIds[nextIdx];
+ renderWork();
+ toast('✓ Etapa completada. Continuando con la siguiente.');
+}
+
+$('verify').onclick=verify;
+$('interact').onclick=verify;
+$('exitWork').onclick=()=>notify('cancel');
+$('back').onclick=()=>notify('cancel');
+$('focus').onclick=()=>{S.view={yaw:0,pitch:0};$('workControls').querySelector('input,button')?.focus();toast('Cámara centrada en el tablero eléctrico.')};
+$('accept').onclick=()=>notify('complete');
+$('restart').onclick=()=>{S=initial();$('complete').style.display='none';refreshUI();renderWork();toast('Práctica reiniciada.')};
+
+window.addEventListener('keydown',e=>{
+ if(/INPUT|SELECT|TEXTAREA/.test(e.target.tagName))return;
+ const k=e.key.toLowerCase();
+ if(k==='e'&&!e.repeat){e.preventDefault();verify();}
+ else if(k==='escape'){e.preventDefault();notify('cancel');}
+});
+
+const canvas=$('scene');
+canvas.addEventListener('pointerdown',e=>{if(e.target!==canvas)return;viewDrag={x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId)});
+canvas.addEventListener('pointermove',e=>{if(!viewDrag)return;S.view.yaw=clamp(S.view.yaw+(e.clientX-viewDrag.x)*.004,-0.8,0.8);S.view.pitch=clamp(S.view.pitch+(e.clientY-viewDrag.y)*.002,-0.35,0.35);viewDrag.x=e.clientX;viewDrag.y=e.clientY});
+canvas.addEventListener('pointerup',()=>viewDrag=null);
+canvas.addEventListener('pointercancel',()=>viewDrag=null);
+
+// ---- WebGL 2 Procedural Power Center Console ----
+const gl=canvas.getContext('webgl2',{antialias:true,alpha:false});
+const hex=s=>[parseInt(s.slice(1,3),16)/255,parseInt(s.slice(3,5),16)/255,parseInt(s.slice(5,7),16)/255];
+const norm=v=>{const l=Math.hypot(v[0],v[1],v[2])||1;return[v[0]/l,v[1]/l,v[2]/l]};
+const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+function mat4Persp(fovy,asp,n,f){const t=1/Math.tan(fovy/2),nf=1/(n-f);return new Float32Array([t/asp,0,0,0,0,t,0,0,0,0,(f+n)*nf,-1,0,0,2*f*n*nf,0])}
+function mat4Look(e,t){const z=norm(sub(e,t)),x=norm(cross([0,1,0],z)),y=cross(z,x);return new Float32Array([x[0],y[0],z[0],0,x[1],y[1],z[1],0,x[2],y[2],z[2],0,-dot(x,e),-dot(y,e),-dot(z,e),1])}
+function mat4Mul(a,b){const o=new Float32Array(16);for(let c=0;c<4;c++)for(let r=0;r<4;r++)o[c*4+r]=a[r]*b[c*4]+a[4+r]*b[c*4+1]+a[8+r]*b[c*4+2]+a[12+r]*b[c*4+3];return o}
+
+class Mesh{
+ constructor(){this.p=[];this.n=[];this.c=[];this.x=[]}
+ tri(a,b,c,col,em=0){const n=norm(cross(sub(b,a),sub(c,a)));for(const v of[a,b,c]){this.p.push(...v);this.n.push(...n);this.c.push(...col);this.x.push(em)}}
+ box(cx,cy,cz,sx,sy,sz,hexCol,em=0){
+  const col=hex(hexCol),hx=sx/2,hy=sy/2,hz=sz/2;
+  const v=[[cx-hx,cy-hy,cz+hz],[cx+hx,cy-hy,cz+hz],[cx+hx,cy+hy,cz+hz],[cx-hx,cy+hy,cz+hz],[cx-hx,cy-hy,cz-hz],[cx+hx,cy-hy,cz-hz],[cx+hx,cy+hy,cz-hz],[cx-hx,cy+hy,cz-hz]];
+  const f=[[0,1,2,3],[5,4,7,6],[4,0,3,7],[1,5,6,2],[3,2,6,7],[4,5,1,0]];
+  for(const q of f){this.tri(v[q[0]],v[q[1]],v[q[2]],col,em);this.tri(v[q[0]],v[q[2]],v[q[3]],col,em)}
+ }
+ upload(){
+  const vao=gl.createVertexArray();gl.bindVertexArray(vao);
+  const add=(arr,loc,sz)=>{const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(arr),gl.STATIC_DRAW);gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,sz,gl.FLOAT,false,0,0);return b};
+  const bufs=[add(this.p,0,3),add(this.n,1,3),add(this.c,2,3),add(this.x,3,1)];
+  return{vao,count:this.p.length/3,bufs};
+ }
+}
+
+let prog,uVP,uTime,staticGpu,dynGpu,dynSig='',lastVP=new Float32Array(16),lastSize=[1,1];
+if(gl){
+ const vs=`#version 300 es
+ layout(location=0)in vec3 aP;layout(location=1)in vec3 aN;layout(location=2)in vec3 aC;layout(location=3)in float aE;
+ uniform mat4 uVP;out vec3 vN;out vec3 vC;out float vE;
+ void main(){vN=aN;vC=aC;vE=aE;gl_Position=uVP*vec4(aP,1.0);}`;
+ const fs=`#version 300 es
+ precision highp float;in vec3 vN;in vec3 vC;in float vE;out vec4 frag;
+ void main(){float l=max(.32,dot(normalize(vN),normalize(vec3(.4,.85,.6))));vec3 col=vC*l+vC*vE*.55;frag=vec4(col,1.0);}`;
+ const sh=(s,t)=>{const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o};
+ prog=gl.createProgram();gl.attachShader(prog,sh(vs,gl.VERTEX_SHADER));gl.attachShader(prog,sh(fs,gl.FRAGMENT_SHADER));gl.linkProgram(prog);
+ uVP=gl.getUniformLocation(prog,'uVP');
+
+ const sb=new Mesh();
+ // Room floor, console desk, side battery racks and back switchgear panel
+ sb.box(0,0.4,0,10,.8,8,'#242038');
+ sb.box(0,1.25,-1.2,5.6,.9,2.2,'#35304d');
+ sb.box(0,2.75,-2.9,6.2,3.6,.4,'#2b2642');
+ sb.box(0,2.75,-2.68,5.2,2.8,.12,'#191629');
+ sb.box(-2.9,2.2,-1.6,1.1,2.8,1.5,'#3f395c');
+ sb.box(2.9,2.2,-1.6,1.1,2.8,1.5,'#3f395c');
+ sb.box(0,4.7,-1.5,7.4,.3,4.2,'#494169');
+ staticGpu=sb.upload();
+}
+
+function buildDynamic(){
+ if(!gl)return;
+ const sig=JSON.stringify([S.station,S.work,S.step]);
+ if(sig===dynSig)return;dynSig=sig;
+ if(dynGpu){gl.deleteVertexArray(dynGpu.vao);dynGpu.bufs.forEach(b=>gl.deleteBuffer(b))}
+ const b=new Mesh(),w=S.work;
+ // Step indicator orbs across top
+ for(let i=0;i<3;i++)b.box(-1.2+i*1.2,4.0,-2.58,.32,.22,.08,i<S.step?'#83dfb0':S.station===stepIds[i]?'#ffcf8c':'#4c466e',i<S.step?1.5:.6);
+ // Left & right reserve switches
+ b.box(-1.55,2.75,-2.55,.55,.8,.14,'#25213d');
+ b.box(-1.55,w.isolate?2.92:2.58,-2.45,.34,.22,.18,w.isolate?'#83dfb0':'#e2875a',w.isolate?1.2:.3);
+ b.box(1.55,2.75,-2.55,.55,.8,.14,'#25213d');
+ b.box(1.55,w.backup?2.92:2.58,-2.45,.34,.22,.18,w.backup?'#a78bfa':'#d69b54',w.backup?1.2:.3);
+ // Charge / distribution bar meters in center
+ const bars=S.station==='distribution'?[w.life/60,w.greenhouse/50,w.shieldBus/50]:[w.charge/100,(w.isolate?.8:.25),(w.backup?.9:.25)];
+ const barCols=['#a78bfa','#83dfb0','#ffcf8c'];
+ for(let i=0;i<3;i++){
+  const h=clamp(bars[i],.1,1)*1.25;
+  b.box(-0.7+i*0.7,1.85+h/2,-2.56,.42,h,.12,barCols[i],1.1);
+ }
+ // Main breaker handle on desk
+ b.box(0,1.76,-1.2,1.1,.18,.65,'#453f63');
+ b.box(0,1.92+(w.breaker?.08:0),-1.2,.48,.22,.32,w.breaker?'#83dfb0':'#f0b36a',w.breaker?1.4:.4);
+ dynGpu=b.upload();
+}
+
+function project(p){
+ const m=lastVP,x=p[0],y=p[1],z=p[2];
+ const cx=m[0]*x+m[4]*y+m[8]*z+m[12],cy=m[1]*x+m[5]*y+m[9]*z+m[13],cw=m[3]*x+m[7]*y+m[11]*z+m[15];
+ if(cw<=0.1)return null;
+ return{x:(cx/cw*.5+.5)*lastSize[0],y:(-cy/cw*.5+.5)*lastSize[1]};
+}
+
+function renderHotspots(){
+ const layer=$('hotspots');layer.innerHTML='';
+ const defs=S.station==='reserve'?[
+  {id:'isolate',name:'AISLAR LÍNEA',pos:[-1.55,3.25,-2.45]},
+  {id:'backup',name:'BANCO DE RESERVA',pos:[1.55,3.25,-2.45]}
+ ]:S.station==='distribution'?[
+  {id:'distpointer',name:'TABLERO DE CARGAS',pos:[0,3.25,-2.5]}
+ ]:[
+  {id:'breaker',name:'DISYUNTOR PRINCIPAL',pos:[0,2.35,-1.2]}
+ ];
+ for(const d of defs){
+  const pt=project(d.pos);if(!pt||pt.x>lastSize[0]-260)continue;
+  const el=document.createElement('button');el.className='hotspot';
+  el.style.left=clamp(pt.x,90,lastSize[0]-100)+'px';
+  el.style.top=clamp(pt.y,120,lastSize[1]-110)+'px';
+  el.innerHTML=`<span class="diamond"><em>⚡</em></span><label>${d.name}</label>`;
+  el.onclick=()=>{
+   if(d.id==='isolate'){S.work.isolate=!S.work.isolate;renderWork()}
+   else if(d.id==='backup'){S.work.backup=!S.work.backup;renderWork()}
+   else if(d.id==='breaker'){S.work.breaker=!S.work.breaker;renderWork()}
+   else{$('lifeSlider')?.focus();toast('Ajusta los tres buses en el panel derecho (90–100% total).')}
+  };
+  layer.appendChild(el);
+ }
+}
+
+function loop(now){
+ if(gl&&prog){
+  const dpr=Math.min(devicePixelRatio||1,2),w=Math.max(1,Math.floor(canvas.clientWidth*dpr)),h=Math.max(1,Math.floor(canvas.clientHeight*dpr));
+  if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}
+  lastSize=[canvas.clientWidth,canvas.clientHeight];
+  gl.viewport(0,0,w,h);gl.clearColor(.08,.07,.14,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);
+  const eye=[S.view.yaw*.9,2.85+S.view.pitch*.5,2.2];
+  const tgt=[S.view.yaw*1.8,2.45-S.view.pitch*1.6,-2.5];
+  lastVP=mat4Mul(mat4Persp(Math.PI/3.2,w/h,.1,50),mat4Look(eye,tgt));
+  buildDynamic();
+  gl.useProgram(prog);gl.uniformMatrix4fv(uVP,false,lastVP);
+  for(const g of[staticGpu,dynGpu]){if(!g)continue;gl.bindVertexArray(g.vao);gl.drawArrays(gl.TRIANGLES,0,g.count)}
+ }
+ if(now-lastMarker>130){renderHotspots();lastMarker=now}
+ requestAnimationFrame(loop);
+}
+
+refreshUI();renderWork();requestAnimationFrame(loop);
+})();
+</script></body></html>

@@ -658,43 +658,45 @@
 
         .botavatar {
             flex: 0 0 88px;
-            height: 88px;
+            height: 92px;
             display: grid;
             place-items: center;
-            position: relative
-        }
-
-        .botavatar::before {
-            content: "";
-            position: absolute;
-            width: 70px;
-            height: 67px;
-            border-radius: 26px;
-            background: linear-gradient(135deg, #e7dccd, #7f95a0);
-            border: 5px solid #5e707b;
-            box-shadow: 0 2px 15px #0008;
-            transform: rotate(-3deg)
-        }
-
-        .botface {
             position: relative;
-            z-index: 1;
-            width: 58px;
-            height: 40px;
-            border-radius: 17px;
-            background: #0d242e;
-            display: flex;
-            align-items: center;
-            justify-content: space-evenly;
-            box-shadow: inset 0 0 13px #102e37
+            cursor: pointer
         }
 
-        .botface i {
-            width: 8px;
-            height: 16px;
-            background: #9defff;
-            border-radius: 100%;
-            box-shadow: 0 0 12px #81e4ff
+        .botgif {
+            width: 88px;
+            height: 92px;
+            object-fit: contain;
+            pointer-events: none;
+            filter: drop-shadow(0 4px 14px rgba(104, 213, 234, .45))
+        }
+
+        .bot-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 9px
+        }
+
+        .bot-chip {
+            border: 1px solid rgba(125, 224, 245, .42);
+            background: rgba(18, 49, 61, .82);
+            color: #d6f7ff;
+            border-radius: 999px;
+            padding: 4px 9px;
+            font-size: 10.5px;
+            font-weight: 700;
+            letter-spacing: .03em;
+            cursor: pointer;
+            transition: .15s
+        }
+
+        .bot-chip:hover {
+            background: rgba(34, 88, 108, .92);
+            border-color: #9defff;
+            transform: translateY(-1px)
         }
 
         .astrocopy {
@@ -2692,7 +2694,7 @@
  <button type="button" id="discoveryMarker" class="discovery-marker hidden" aria-label="Información con imagen de NASA sobre la matriz de paneles"><span aria-hidden="true">ⓘ</span><span>Información con imagen<small>Matriz de paneles · NASA</small></span></button>
  <div class="interior-reticle" aria-hidden="true"></div>
   <div class="controls"><div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>Mover</span></div><div><kbd>Espacio</kbd><span>Saltar</span></div><div><kbd>Mouse</kbd><span>Mirar</span></div><div><kbd>E</kbd><span>Entrar / usar / hablar</span></div><div><kbd>V</kbd><span>Cambiar vista</span></div><div><kbd>P</kbd><span>Panel de base</span></div><div><kbd>Esc</kbd><span>Pausa</span></div></div>
- <div class="astrobot"><div class="botavatar" aria-hidden="true"><div class="botface"><i></i><i></i></div></div><div class="astrocopy"><div class="botname">ASTROBOT <span style="font-size:12px;float:right">▥</span></div><p id="botText" aria-live="polite">El sistema de energía está inestable. Revisemos los paneles solares antes de que empeore.</p><div class="botstat" id="botStatus">● CANAL DE ASISTENCIA ACTIVO</div></div></div>
+ <div class="astrobot"><div class="botavatar" id="botAvatar" title="Haz clic para recibir un consejo"><img class="botgif" src="astrobot.gif" alt="Astrobot guía"></div><div class="astrocopy"><div class="botname">ASTROBOT <span style="font-size:12px;float:right">▥</span></div><p id="botText" aria-live="polite">El sistema de energía está inestable. Revisemos los paneles solares antes de que empeore.</p><div class="bot-actions"><button type="button" class="bot-chip" id="botHelpNow">¿Qué hago?</button><button type="button" class="bot-chip" id="botControlsBtn">Controles</button><button type="button" class="bot-chip" id="botTargetBtn">📍 Objetivo</button></div><div class="botstat" id="botStatus">● CANAL DE ASISTENCIA ACTIVO</div></div></div>
  <button class="menu-pause" id="pause">☰ &nbsp; MENÚ · ESC</button>
  <div class="mobile-controls"><div class="dpad"><div></div><button data-key="KeyW" aria-label="Adelante">↑</button><div></div><button data-key="KeyA" aria-label="Izquierda">←</button><button data-key="KeyS" aria-label="Atrás">↓</button><button data-key="KeyD" aria-label="Derecha">→</button></div></div>
  <div class="mobile-actions"><button id="mobileInteract">E · INTERACTUAR</button><button id="mobileCamera">V · CÁMARA</button></div>
