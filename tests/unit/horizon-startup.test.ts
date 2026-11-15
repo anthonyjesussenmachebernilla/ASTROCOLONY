@@ -7,14 +7,15 @@ function startDemo(failGraphics: boolean, selectedMode: 'explorador' | 'comandan
   document.body.innerHTML = html.slice(html.indexOf('<body>') + 6, html.indexOf('</body>'));
   const scheduled: (() => void)[] = [];
   const navigate = vi.fn();
+  const discovery = { open: vi.fn(), cancel: vi.fn() };
   let tick: ((data: unknown) => void) | null = null;
-  const engine = { setStorm: vi.fn(), start: vi.fn(), pause: vi.fn(), leave: vi.fn(), setSkin: vi.fn(), getNearest: vi.fn((): { robot: { id: number }; inside: boolean } | null => null), restore: vi.fn(() => true), snapshot: () => ({}), getState: () => ({ pos: [0, 0, 19], yaw: 0, camera: 'third', storm: 0, stormTarget: 0 }) };
+  const engine = { setStorm: vi.fn(), start: vi.fn(), pause: vi.fn(), leave: vi.fn(), getNearest: vi.fn((): { robot: { id: number }; inside: boolean } | null => null), restore: vi.fn(() => true), snapshot: () => ({}), getState: () => ({ pos: [0, 0, 19], yaw: 0, camera: 'third', storm: 0, stormTarget: 0 }) };
   const stored = new Map<string, string>([['astrocolony-mode', selectedMode]]);
   if (panelCollapsed) stored.set('astrocolony-mission-panel-collapsed', 'true');
   if (savedMode) stored.set('astrocolony-horizonte-save-v1', JSON.stringify({ version: 1, mode: savedMode, world: {}, step: 0, energy: 62, oxygen: 78, food: 54, shield: 68 }));
   const context = {
     document,
-    window: { addEventListener: vi.fn(), location: { search: '?autostart=1' }, parent: { location: { assign: navigate } }, MarsGfx: { skins: [{ id: 'explorer' }], stations: [{ id: 'solar', x: 0, z: 0 }], createDemo: (_canvas: unknown, handlers: { onTick: (data: unknown) => void }) => { if (failGraphics) throw new Error('WebGL 2 no disponible'); tick = handlers.onTick; return engine; } } },
+    window: { MarsDiscovery: discovery, addEventListener: vi.fn(), location: { search: '?autostart=1' }, parent: { location: { assign: navigate } }, MarsGfx: { stations: [{ id: 'solar', x: 0, z: 0 }], createDemo: (_canvas: unknown, handlers: { onTick: (data: unknown) => void }) => { if (failGraphics) throw new Error('WebGL 2 no disponible'); tick = handlers.onTick; return engine; } } },
     localStorage: { getItem: (key: string) => stored.get(key) ?? null, setItem: (key: string, value: string) => stored.set(key, value) },
     performance: { now: () => 1000 },
     URLSearchParams,
@@ -25,7 +26,7 @@ function startDemo(failGraphics: boolean, selectedMode: 'explorador' | 'comandan
   runInNewContext(readFileSync('public/horizonte/campaign.js', 'utf8'), context);
   runInNewContext(readFileSync('public/horizonte/game.js', 'utf8'), context);
   scheduled.shift()?.();
-  return { engine, navigate, stored, tick: (data: unknown) => tick?.(data) };
+  return { engine, navigate, stored, discovery, tick: (data: unknown) => tick?.(data) };
 }
 
 afterEach(() => { document.body.innerHTML = ''; });
@@ -97,5 +98,18 @@ describe('inicio de HORIZONTE', () => {
     document.body.innerHTML = '';
     startDemo(false, 'explorador', undefined, true);
     expect(document.getElementById('missionDetails')).toHaveAttribute('hidden');
+  });
+  it('shows the photo information marker in the solar module and opens the NASA discovery', () => {
+    const { tick, discovery } = startDemo(false);
+    const marker = document.getElementById('discoveryMarker')!;
+    expect(marker).toHaveClass('hidden');
+    const nearest = { target: { id: 'array', name: 'Matriz de paneles' }, dist: 1 };
+    tick({ interior: 'solar', nearest, fps: 60 });
+    expect(marker).not.toHaveClass('hidden');
+    expect(marker).toHaveTextContent('Información con imagen');
+    expect(marker).toHaveTextContent('Matriz de paneles');
+    marker.click();expect(discovery.open).toHaveBeenCalledOnce();
+    tick({ interior: 'habitat', nearest, fps: 60 });
+    expect(marker).toHaveClass('hidden');
   });
 });

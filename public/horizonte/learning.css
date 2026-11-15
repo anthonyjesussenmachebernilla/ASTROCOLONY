@@ -1,0 +1,37 @@
+/* Interface and educational copy assisted by ChatGPT/Codex. */
+.resource-comparison { display: grid; gap: 8px; margin: 14px 0; text-align: left; }
+.resource-change { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 3px 10px; padding-bottom: 8px; border-bottom: 1px solid #76858b40; font-size: 14px; }
+.resource-change > strong { color: #f8f7f0; font-size: 14px; font-weight: 750; white-space: nowrap; }
+.resource-change > small { grid-column: 2; text-align: right; font-size: 12px; }
+.resource-change .gain { color: #a5e7bd; }
+.resource-change .loss { color: #ffd299; }
+.resource-change .neutral { color: #b9ced1; }
+.choice .resource-comparison { margin-bottom: 0; }
+.choice .resource-change { font-size: 12px; }
+.choice .resource-change > small { margin-top: 0; }
+.num.resource-rise { animation: resource-rise .8s ease-out; }
+.num.resource-fall { animation: resource-fall .8s ease-out; }
+@keyframes resource-rise { from { color: #a5e7bd; text-shadow: 0 0 12px #a5e7bd; } to { color: inherit; text-shadow: none; } }
+@keyframes resource-fall { from { color: #ffd299; text-shadow: 0 0 12px #ffd299; } to { color: inherit; text-shadow: none; } }
+.discovery-marker { position: absolute; z-index: 7; display: flex; align-items: center; gap: 9px; width: 220px; min-height: 56px; padding: 10px 13px; transform: translate(-50%, -100%); pointer-events: auto; text-align: left; background: #15343bed; border: 1px solid #8adbe5; color: #e7fbff; border-radius: 9px; box-shadow: 0 4px 18px #0005; }
+.discovery-marker > span:first-child { font-size: 27px; line-height: 1; }
+.discovery-marker > span:last-child { font-size: 13px; font-weight: 750; }
+.discovery-marker small { display: block; margin-top: 4px; font-size: 11px; font-weight: 400; color: #c2e0e4; }
+.discovery-marker:hover { background: #22505a; }
+.discovery-marker:focus-visible { outline: 3px solid #f8d48d; outline-offset: 4px; }
+.discovery-marker.is-docked { left: 24px; top: 110px; transform: none; }
+@media (max-width:700px) {
+  .interior-mode .topbar { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+  .interior-mode .vitals { order: 0; width: 100%; margin: 0; }
+  .interior-mode .mission-day { order: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0; padding: 6px 9px; }
+  .interior-mode .mission-day b { font-size: 16px; }
+  .interior-mode .mission-day small:not(.mode-badge) { display: none; }
+  .interior-mode .mission-day .mode-badge { margin-top: 0; }
+  .interior-mode .menu-pause { top: 99px; }
+  .interior-mode .interior-hud { top: 137px; width: min(310px, calc(100vw - 20px)); }
+  .discovery-marker.is-docked { left: 10px; top: 208px; width: min(220px, calc(100vw - 20px)); }
+  .resource-change { font-size: 13px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .num.resource-rise, .num.resource-fall { animation: none; }
+}

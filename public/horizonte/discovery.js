@@ -5,10 +5,10 @@
  let version=0,controller=null,timer=null;
  function cancel(){version++;controller?.abort();controller=null;clearTimeout(timer);timer=null}
  function element(tag,text,className){const node=document.createElement(tag);if(text)node.textContent=text;if(className)node.className=className;return node}
- function open({showModal,onBack,mode}){
+ function open({showModal,onBack,mode,backLabel='Volver al hallazgo'}){
   showModal('Marte real','El polvo también llega a los paneles',
    '<div id="marsDiscovery" class="mars-discovery" aria-busy="true"><p role="status">Buscando una fotografía de InSight en NASA…</p></div>',
-   [{label:'Volver al hallazgo',action:onBack}]);
+   [{label:backLabel,action:onBack}]);
   const ticket=version,root=document.getElementById('marsDiscovery');let failedState=false;
   controller=new AbortController();
   const active=()=>ticket===version&&root.isConnected&&!failedState;
@@ -19,7 +19,7 @@
    root.setAttribute('aria-busy','false');
    root.replaceChildren(element('p','La foto no pudo cargarse. Puedes volver al hallazgo y continuar tu misión.','mars-unavailable'));
    const retry=element('button','Intentar otra vez','smallbtn mars-retry');retry.type='button';
-   retry.addEventListener('click',()=>open({showModal,onBack,mode}));root.appendChild(retry);
+   retry.addEventListener('click',()=>open({showModal,onBack,mode,backLabel}));root.appendChild(retry);
   };
   // Includes the API call and the image download, so a slow connection never traps the player.
   timer=setTimeout(failed,12000);

@@ -15,13 +15,16 @@ sol: 4 de energía, 4 de oxígeno, 3 de alimentos y 1 de blindaje.
 
 Antes de confirmar se muestra el balance y se permite deshacer la decisión. Si
 una reserva se agotaría, Astrobot puede ofrecer una ayuda de práctica una vez
-por sol (repone cada reserva hasta un mínimo de 35 puntos, sin premio adicional).
-Esa ayuda queda declarada en la bitácora. Las monedas se conceden solo al cerrar
-cada sol. El resultado final conserva las reservas del cierre; seguir explorando
-no cambia el desenlace ni vuelve a conceder premios.
+por sol (repone cada reserva hasta un mínimo de 35 puntos).
+Esa ayuda queda declarada en la bitácora. El juego se centra en cuatro porcentajes:
+energía, oxígeno, alimentos y blindaje. Cada opción muestra sus porcentajes antes
+y después; el balance confirma lo que cambió. No incluye monedas, tiendas,
+inventario, apariencias comprables ni una barra adicional de vida.
+El resultado final conserva las reservas del cierre; seguir explorando no cambia
+el desenlace. Registrar información científica no modifica los recursos.
 
 La partida utiliza el mismo identificador local de guardado con formato versión
-2, conservando mundo, modo, hallazgos y armario. Las partidas anteriores migran
+2, conservando mundo, modo, hallazgos y los cuatro recursos. Las partidas anteriores migran
 al siguiente sol de tutorial pendiente; una misión antigua terminada continúa en
 el Sol 4. El resultado final y la bitácora se recuperan al volver a abrir el juego.
 La simulación anterior en `/game/legacy` conserva su funcionamiento independiente.
@@ -32,10 +35,12 @@ didácticos, no cálculos de supervivencia validados por NASA.
 
 ## Fotografía interactiva
 
-Entra al módulo de paneles solares, acércate a **Matriz de paneles**, pulsa **E**
-y elige **Ver una imagen real**. La ficha puede consultarse otra vez después de
-registrar el hallazgo, sin conceder recursos adicionales. La misión permanece
-pausada y se puede salir con Escape o volver al hallazgo.
+Al acercarte a los paneles solares, el aviso de entrada indica que hay una foto
+dentro. En el módulo, pulsa **ⓘ Información con imagen**: la marca señala la
+matriz de paneles cuando está a la vista, o aparece debajo de la información del
+módulo. También puedes examinar la matriz con **E** y abrir la misma ficha.
+La fotografía puede consultarse de nuevo después de registrar el hallazgo.
+La misión permanece pausada y se puede salir con Escape o volver al hallazgo.
 
 - Fotografía: **InSight's Dusty Solar Panel**, NASA Image Library `PIA25286`.
 - Fuente y crédito: [NASA/JPL-Caltech](https://images.nasa.gov/details/PIA25286).

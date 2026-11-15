@@ -15,9 +15,9 @@ function boot(fetchPhoto: (url: string, options: unknown) => unknown) {
   document.body.innerHTML = html.slice(html.indexOf('<body>') + 6, html.indexOf('<script src="engine.js"'));
   const state = { pos: [0, 0, 19], yaw: 0, camera: 'third', interior: 'solar', storm: 0, stormTarget: 0 };
   const nearest = { inside: true, station: { id: 'solar' }, target: { id: 'array', name: 'Matriz de paneles', detail: 'El polvo reduce la luz.' }, dist: 1 };
-  const engine = { setStorm: vi.fn(), start: vi.fn(), pause: vi.fn(), leave: vi.fn(), setSkin: vi.fn(), getNearest: () => nearest, snapshot: () => ({}), getState: () => state };
+  const engine = { setStorm: vi.fn(), start: vi.fn(), pause: vi.fn(), leave: vi.fn(), getNearest: () => nearest, snapshot: () => ({}), getState: () => state };
   const storage = new Map<string, string>();
-  const gameWindow = { location: { search: '?autostart=1' }, addEventListener: vi.fn(), MarsGfx: { skins: [{ id: 'explorer' }], stations: [{ id: 'solar' }], createDemo: () => engine }, MarsDiscovery: undefined };
+  const gameWindow = { location: { search: '?autostart=1' }, addEventListener: vi.fn(), MarsGfx: { stations: [{ id: 'solar' }], createDemo: () => engine }, MarsDiscovery: undefined };
   const context = { document, window: gameWindow, localStorage: { getItem: (key: string) => storage.get(key) ?? null, setItem: (key: string, value: string) => storage.set(key, value) },
     fetch: (url: string, options: unknown) => url.includes('/discovery') ? fetchPhoto(url, options) : new Promise(() => {}),
     setTimeout, clearTimeout, setInterval, URL, URLSearchParams, AbortController, performance: { now: () => 1000 }, console };
@@ -26,7 +26,7 @@ function boot(fetchPhoto: (url: string, options: unknown) => unknown) {
   runInNewContext(readFileSync('public/horizonte/game.js', 'utf8'), context);
   vi.advanceTimersByTime(65);
   document.getElementById('mobileInteract')!.click();
-  return { engine, open: () => button('Ver una imagen real').click() };
+  return { engine, open: () => button('ⓘ Información con imagen').click() };
 }
 function button(label: string) {
   const node = [...document.querySelectorAll<HTMLButtonElement>('button')].find(node => node.textContent === label);
@@ -38,7 +38,7 @@ beforeEach(() => vi.useFakeTimers());
 afterEach(() => { vi.clearAllTimers(); vi.useRealTimers(); document.body.innerHTML = ''; });
 
 describe('solar panel discovery in HORIZONTE', () => {
-  it('shows one real photo and safe source text while paused, and returns without duplicate rewards', async () => {
+  it('shows one real photo and safe source text while paused, and returns without changing the resource reserves', async () => {
     const { engine, open } = boot(vi.fn().mockResolvedValue({ ok: true, json: async () => ({ discovery }) }));
     open();await flush();
     const photo = document.querySelector<HTMLImageElement>('#marsDiscovery img')!;
@@ -52,12 +52,12 @@ describe('solar panel discovery in HORIZONTE', () => {
     expect(engine.pause).toHaveBeenLastCalledWith(true);
     button('Volver al hallazgo').click();
     button('REGISTRAR HALLAZGO').click();
-    expect(document.getElementById('energy')).toHaveTextContent('63');
+    expect(document.getElementById('energy')).toHaveTextContent('62');
     document.getElementById('mobileInteract')!.click();
     expect(document.getElementById('modalBody')).toHaveTextContent('Ya registraste');
     expect([...document.querySelectorAll('button')].some(node => node.textContent === 'REGISTRAR HALLAZGO')).toBe(false);
     open();await flush();button('Volver al hallazgo').click();
-    expect(document.getElementById('energy')).toHaveTextContent('63');
+    expect(document.getElementById('energy')).toHaveTextContent('62');
   });
 
   it('offers retry after a network failure and after a failed image download', async () => {

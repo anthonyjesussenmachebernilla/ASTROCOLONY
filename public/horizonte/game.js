@@ -5,13 +5,10 @@ const canvas=$('scene'),menu=$('menu'),ui=$('gameUI'),shade=$('modalShade');
 let playerMode=localStorage.getItem('astrocolony-mode')==='comandante'?'comandante':'explorador';
 const SAVE_KEY='astrocolony-horizonte-save-v1';
 const MISSION_PANEL_KEY='astrocolony-mission-panel-collapsed';
-const WARDROBE_KEY='astrocolony-wardrobe-v1';
-let engine=null,storm=false,started=false,paused=false,energy=62,oxygen=78,food=54,shield=68,health=100,lastTick=null,toastTimer=0,nasaWeather=null,lowHealthWarned=false,lastMoveHealthAt=0,heldFood=null,eatTimer=0;
+let engine=null,storm=false,started=false,paused=false,energy=62,oxygen=78,food=54,shield=68,lastTick=null,toastTimer=0,nasaWeather=null;
 const campaignApi=window.MarsCampaign;
 let campaign=campaignApi.initial();
-let eating=false,eatRemaining=0;
 const inspected=new Set();
-let coins=0,equipped='explorer',owned=new Set(['explorer']),backpack={};
 let lastSaveAt=-Infinity;
 let modalReturnFocus=null;
 const day=()=>campaignApi.days[campaign.sol-1];
@@ -26,7 +23,7 @@ const robotGuides=[
 const robotQuestions=[
  {question:'La energía está bajando. ¿Qué conviene revisar primero?',answers:['Paneles solares','Cambiar el traje'],correct:0,explanation:'Los paneles pueden perder rendimiento por el polvo. Inspecciónalos antes de reparar el regulador.'},
  {question:'¿Qué sistema también puede sufrir si gastas toda la energía?',answers:['El color del traje','El invernadero'],correct:1,explanation:'El invernadero necesita electricidad para mantener sus cultivos.'},
- {question:'Si una tormenta solar amenaza la base, ¿qué recurso debes vigilar?',answers:['Monedas','Blindaje'],correct:1,explanation:'El blindaje representa la protección de la tripulación frente a la radiación.'}
+ {question:'Si una tormenta solar amenaza la base, ¿qué recurso debes vigilar?',answers:['Iluminación','Blindaje'],correct:1,explanation:'El blindaje representa la protección de la tripulación frente a la radiación.'}
 ];
 function missionHint(){return campaign.finished?'Ya resolviste el misterio. Puedes seguir explorando o ver el resultado desde el panel de la base.':campaign.completed?'Terminaste el objetivo de hoy. Pulsa Terminar el sol para revisar el balance y continuar.':day().hint}
 function talkToRobot(robot){
@@ -51,97 +48,9 @@ function talkToRobot(robot){
 function message(text){$('botText').textContent=text}
 function modeLabel(){return playerMode==='comandante'?'Comandante · 10–12':'Explorador · 7–9'}
 function updateMode(){$('modeBadge').textContent=modeLabel();localStorage.setItem('astrocolony-mode',playerMode)}
-function stats(){for(const [name,num] of Object.entries({energy,oxygen,food,shield,health})){const el=$(name);if(el)el.textContent=`${Math.round(num)} %`}$('healthVital')?.classList.toggle('low',health<=35)}
-const spaceFoods=[
- {id:'apricots',icon:'🍑',name:'Albaricoques secos',desc:'Frutas deshidratadas que sirven como refrigerio.',price:8,heal:10},
- {id:'juice',icon:'🧃',name:'Jugos',desc:'Bebidas que se preparan agregando agua y se toman con una pajilla especial.',price:9,heal:11},
- {id:'carrots',icon:'🥕',name:'Zanahorias',desc:'Verduras frescas que pueden comer durante los primeros días.',price:10,heal:12},
- {id:'tortillas',icon:'🌮',name:'Tortillas',desc:'Son fáciles de comer y no producen migajas.',price:12,heal:15},
- {id:'pudding',icon:'🍫',name:'Pudín de chocolate',desc:'Postre que se puede comer con cuchara.',price:14,heal:16},
- {id:'eggs',icon:'🍳',name:'Huevos revueltos',desc:'Vienen precocinados y deshidratados. Se les agrega agua.',price:15,heal:18},
- {id:'shrimp',icon:'🍤',name:'Cóctel de camarones',desc:'Comida preparada que puede tener un sabor picante.',price:22,heal:25},
- {id:'steak',icon:'🥩',name:'Bistec de res',desc:'Carne tratada con irradiación para conservarse durante más tiempo.',price:30,heal:35},
-];
-function loseHealth(amount,floor=10){health=Math.max(Math.min(floor,health),health-amount);stats();if(health<=35&&!lowHealthWarned){lowHealthWarned=true;toast('¡Tu vida está baja por el esfuerzo! Usa tus monedas en Suministros · Comida.')}else if(health>45){lowHealthWarned=false}}
-function foodStore(){
- showModal('SUMINISTROS ESPACIALES',`Comida · ${coins} monedas · Vida ${Math.round(health)}%`,`<p>Compra alimentos con tus monedas para guardarlos en tu mochila (<b>Ctrl + R</b>). Usa <b>Ctrl + E</b> para comer el alimento de tu mano.</p><div class="food-grid">${spaceFoods.map(f=>`<article class="food-card"><div><div class="food-head"><span class="food-icon">${f.icon}</span><div><strong>${f.name}</strong><span class="food-meta">+${f.heal}% vida · ${f.price} monedas${backpack[f.id]?` · Mochila: x${backpack[f.id]}`:''}</span></div></div><small>${f.desc}</small></div><button type="button" data-food="${f.id}" ${coins<f.price?'disabled':''}>${coins>=f.price?`COMPRAR (${f.price} monedas)`:`FALTAN ${f.price-coins} monedas`}</button></article>`).join('')}</div>`,[{label:'ABRIR MOCHILA (CTRL+R)',secondary:true,action:backpackModal},{label:'VOLVER AL JUEGO',action:hideModal}]);
- for(const button of $('modalBody').querySelectorAll('[data-food]'))button.addEventListener('click',()=>{
-  const item=spaceFoods.find(f=>f.id===button.dataset.food);
-  if(!item||coins<item.price)return;
-  if(eating){toast('Cierra el panel y termina de comer antes de tomar otro alimento.');return}
-  coins-=item.price;
-  backpack[item.id]=(backpack[item.id]||0)+1;
-  heldFood=item;
-  clearTimeout(eatTimer);eatTimer=0;
-  engine?.setHeldFood?.(item.id);
-  saveWardrobe();stats();
-  toast(`Guardaste ${item.icon} ${item.name} en tu mochila (x${backpack[item.id]}). Pulsa Ctrl + E para comer.`);
-  foodStore();
- });
-}
-function backpackModal(){
- if(paused&&$('modalTag').textContent==='MOCHILA DEL ASTRONAUTA'){hideModal();return}
- const items=spaceFoods.filter(f=>(backpack[f.id]||0)>0);
- const renderSlot=(item,isActive=false)=>item
-  ?`<button type="button" class="mc-slot has-item${isActive?' active':''}" data-bp="${item.id}" title="${item.name} (+${item.heal}% vida)"><span>${item.icon}</span><span class="mc-count">${backpack[item.id]}</span></button>`
-  :`<div class="mc-slot" aria-hidden="true"></div>`;
- const mainSlots=Array.from({length:27},(_,i)=>renderSlot(items[i]||null,items[i]&&heldFood?.id===items[i].id)).join('');
- const hotbarSlots=Array.from({length:9},(_,i)=>renderSlot(i===0?heldFood:null,i===0&&Boolean(heldFood))).join('');
- showModal('MOCHILA DEL ASTRONAUTA','Inventario',`<div class="mc-inv"><div class="mc-title"><span>Inventario</span><span>${items.reduce((s,f)=>s+backpack[f.id],0)} objetos</span></div><div class="mc-grid">${mainSlots}</div><div class="mc-hotbar">${hotbarSlots}</div></div><p class="mc-tip">Haz clic en un alimento para tomarlo en tu mano. Luego pulsa <b>Ctrl + E</b> para comerlo.</p>`,[{label:'IR A SUMINISTROS',secondary:true,action:foodStore},{label:'CERRAR (CTRL+R)',action:hideModal}]);
- for(const btn of $('modalBody').querySelectorAll('[data-bp]'))btn.addEventListener('click',()=>{
-  const item=spaceFoods.find(f=>f.id===btn.dataset.bp);
-  if(!item||!(backpack[item.id]>0))return;
-  if(eating){toast('Cierra la mochila para terminar de comer antes de cambiar de alimento.');return}
-  heldFood=item;
-  clearTimeout(eatTimer);eatTimer=0;
-  engine?.setHeldFood?.(item.id);
-  hideModal();
-  toast(`Tomaste ${item.icon} ${item.name} en tu mano (x${backpack[item.id]}). Pulsa Ctrl + E para comer.`);
- });
-}
-function eatHeldFood(){
- if(paused||eating)return;
- if(!heldFood){toast('No tienes comida en la mano. Abre tu mochila con Ctrl + R.');return}
- if(!(backpack[heldFood.id]>0))return;
- if(!engine?.triggerEat?.())return;
- const item=heldFood,stepHeal=item.heal/10;
- eating=true;eatRemaining=item.heal;
- if(backpack[item.id]>1)backpack[item.id]--;else delete backpack[item.id];
- saveWardrobe();
- clearTimeout(eatTimer);
- toast(`Comiendo ${item.icon} ${item.name}…`);
- let steps=0;
- const tick=()=>{
-  if(steps>=10||!eating)return;
-  if(paused){eatTimer=setTimeout(tick,180);return}
-  steps++;
-  const healing=Math.min(stepHeal,eatRemaining);eatRemaining-=healing;health=Math.min(100,health+healing);
-  if(health>35)lowHealthWarned=false;
-  stats();
-  if(steps<10)eatTimer=setTimeout(tick,180);
- };
- eatTimer=setTimeout(tick,180);
-}
-function finishEating(){
- clearTimeout(eatTimer);eatTimer=0;
- if(!heldFood||!eating)return;
- const item=heldFood;
- health=Math.min(100,health+eatRemaining);eatRemaining=0;eating=false;
- if(health>35)lowHealthWarned=false;stats();
- heldFood=null;
- engine?.setHeldFood?.(null);
- saveWardrobe();
- toast(`¡Comiste ${item.icon} ${item.name}! Vida: ${Math.round(health)}%.`);
-}
-const MISSION_COIN_TOTAL=campaignApi.coinTotal;
-function coinPercent(amount){return Math.round((amount/MISSION_COIN_TOTAL)*100)}
-function updateWallet(){$('coinCount').textContent=String(coins);const pct=$('coinPct');if(pct)pct.textContent=`(${Math.min(100,coinPercent(coins))}%)`}
-function saveWardrobe(){try{localStorage.setItem(WARDROBE_KEY,JSON.stringify({coins,owned:[...owned],equipped,backpack}))}catch{}updateWallet();saveGame(true)}
-function loadWardrobe(){try{const saved=JSON.parse(localStorage.getItem(WARDROBE_KEY)||'null'),ids=new Set(window.MarsGfx.skins.map(s=>s.id));if(saved&&Number.isInteger(saved.coins)&&saved.coins>=0&&saved.coins<=100000){coins=saved.coins;owned=new Set(['explorer',...(Array.isArray(saved.owned)?saved.owned.filter(id=>ids.has(id)):[])]);equipped=owned.has(saved.equipped)?saved.equipped:'explorer';backpack={};const foodIds=new Set(spaceFoods.map(item=>item.id));if(saved.backpack&&typeof saved.backpack==='object')for(const [id,count] of Object.entries(saved.backpack))if(foodIds.has(id)&&Number.isInteger(count)&&count>0&&count<=999)backpack[id]=count}else{const old=JSON.parse(localStorage.getItem(SAVE_KEY)||'null'),restored=old?.version===2?campaignApi.restore(old.campaign):null;coins=restored?restored.history.reduce((sum,entry)=>sum+campaignApi.days[entry.sol-1].reward,0):[0,25,60,110][old?.step]||0;localStorage.setItem(WARDROBE_KEY,JSON.stringify({coins,owned:['explorer'],equipped,backpack}))}}catch{}updateWallet()}
-function earnCoins(amount){coins+=amount;saveWardrobe()}
-function wardrobe(){const skins=window.MarsGfx.skins;showModal('COLECCIÓN DE TRAJES',`Armario · ${coins} monedas`,`<p>Completa objetivos de la misión para ganar monedas. Compra una apariencia una vez y úsala cuando quieras.</p><div class="skin-grid">${skins.map(s=>`<article class="skin-card"><div class="skin-preview" style="--suit:${s.suit};--helmet:${s.helmet};--pack:${s.pack};--accent:${s.accent}"><i class="skin-head"></i><i class="skin-body"></i><i class="skin-pack"></i></div><div><strong>${s.name}</strong><small>${s.price===0?'Incluido':`${s.price} monedas`}</small></div><button type="button" data-skin="${s.id}" ${!owned.has(s.id)&&coins<s.price?'disabled':''}>${equipped===s.id?'EN USO':owned.has(s.id)?'EQUIPAR':coins>=s.price?'COMPRAR':`FALTAN ${s.price-coins}`}</button></article>`).join('')}</div>`,[{label:'VOLVER AL JUEGO',action:hideModal}]);for(const button of $('modalBody').querySelectorAll('[data-skin]'))button.addEventListener('click',()=>{const skin=skins.find(s=>s.id===button.dataset.skin);if(!skin||equipped===skin.id)return;if(!owned.has(skin.id)){if(coins<skin.price)return;coins-=skin.price;owned.add(skin.id)}equipped=skin.id;engine.setSkin(equipped);saveWardrobe();hideModal();toast(`${skin.name} equipada. Tu colección tiene ${owned.size} apariencias.`)})}
-function saveGame(force=false){if(!started||!engine)return;const now=performance.now();if(!force&&now-lastSaveAt<900)return;lastSaveAt=now;try{localStorage.setItem(SAVE_KEY,JSON.stringify({version:2,world:engine.snapshot(),mode:playerMode,campaign,...resources(),health,inspected:[...inspected]}))}catch{}}
-function loadGame(){try{const saved=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');if(!saved||![1,2].includes(saved.version)||!['energy','oxygen','food','shield'].every(key=>Number.isFinite(saved[key])&&saved[key]>=0&&saved[key]<=100))return false;const restored=saved.version===2?campaignApi.restore(saved.campaign):campaignApi.migrate(saved.step,saved);if(!restored||!engine.restore(saved.world))return false;campaign=restored;if(saved.mode==='explorador'||saved.mode==='comandante')playerMode=saved.mode;updateMode();health=Number.isFinite(saved.health)&&saved.health>=0&&saved.health<=100?saved.health:100;lowHealthWarned=health<=35;setResources(saved);inspected.clear();for(const item of Array.isArray(saved.inspected)?saved.inspected:[])if(typeof item==='string'&&item.length<80)inspected.add(item);storm=Boolean(saved.world.stormTarget);checklist();message(campaignNote());updateInterior();$('world').classList.toggle('storm',storm);$('alertLabel').textContent=weatherLabel();saveGame(true);return true}catch{return false}}
+function stats(){for(const [name,num] of Object.entries(resources())){const element=$(name),before=parseFloat(element.textContent);element.textContent=`${Math.round(num)} %`;if(Number.isFinite(before)&&before!==Math.round(num)){element.classList.remove('resource-rise','resource-fall');void element.offsetWidth;element.classList.add(num>before?'resource-rise':'resource-fall')}}}
+function saveGame(force=false){if(!started||!engine)return;const now=performance.now();if(!force&&now-lastSaveAt<900)return;lastSaveAt=now;try{localStorage.setItem(SAVE_KEY,JSON.stringify({version:2,world:engine.snapshot(),mode:playerMode,campaign,...resources(),inspected:[...inspected]}))}catch{}}
+function loadGame(){try{const saved=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');if(!saved||![1,2].includes(saved.version)||!['energy','oxygen','food','shield'].every(key=>Number.isFinite(saved[key])&&saved[key]>=0&&saved[key]<=100))return false;const restored=saved.version===2?campaignApi.restore(saved.campaign):campaignApi.migrate(saved.step,saved);if(!restored||!engine.restore(saved.world))return false;campaign=restored;if(saved.mode==='explorador'||saved.mode==='comandante')playerMode=saved.mode;updateMode();setResources(saved);inspected.clear();for(const item of Array.isArray(saved.inspected)?saved.inspected:[])if(typeof item==='string'&&item.length<80)inspected.add(item);storm=Boolean(saved.world.stormTarget);checklist();message(campaignNote());updateInterior();$('world').classList.toggle('storm',storm);$('alertLabel').textContent=weatherLabel();saveGame(true);return true}catch{return false}}
 function checklist(){
  $('missionSol').textContent=`Sol ${campaign.sol} de 10`;
  $('missionPhase').textContent=campaign.finished?'Historia completada':campaign.sol<=3?`Tutorial ${campaign.sol} de 3`:'Tu misión';
@@ -186,7 +95,7 @@ shade.addEventListener('keydown',event=>{
 function instructional(){showModal('INSTRUCCIONES DE LA MISIÓN','Bienvenido a Aurora-1',`<p>Has llegado a una colonia de investigación en Marte. Tu expedición dura diez soles. Los tres primeros son de entrenamiento. ASTROBOT te ayudará a cuidar la base y resolver una señal misteriosa.</p><p><b style="color:#ffdc9b">Controles:</b> usa <b>W A S D</b> para caminar, <b>Espacio</b> para saltar, arrastra el ratón para mirar y <b>V</b> para cambiar de cámara. Acércate a un módulo y pulsa <b>E</b> para entrar; dentro, pulsa <b>E</b> junto a la consola para usarla o junto a la puerta para salir. <b>P</b> o <b>Tab</b> abre el panel de la base.</p><p><b>Ir al objetivo</b> orienta la cámara hacia el siguiente equipo; tú controlas el movimiento.</p><p style="font-size:12px;color:#b9ced1">El clima espacial consulta NASA DONKI. Los recursos y decisiones del juego son una simulación educativa.</p>`,[{label:'ENTENDIDO',action:hideModal}])}
 const resourceNames={energy:'Energía',oxygen:'Oxígeno',food:'Alimentos',shield:'Blindaje'};
 function resourceHtml(values=resources()){return `<div class="statline">${Object.entries(resourceNames).map(([key,label])=>`<b>${label}: ${Math.round(values[key])}%</b>`).join('')}</div>`}
-function deltaText(deltas){return Object.entries(deltas).map(([key,value])=>`${resourceNames[key]} ${value>0?'+':''}${value}`).join(' · ')}
+function comparisonHtml(before,after,onlyChanged=false){return `<span class="resource-comparison" role="list" aria-label="Cambios en los porcentajes">${Object.entries(resourceNames).filter(([key])=>!onlyChanged||after[key]!==before[key]).map(([key,label])=>{const change=after[key]-before[key];return `<span class="resource-change" role="listitem" data-resource="${key}"><span>${label}</span><strong>${Math.round(before[key])}% → ${Math.round(after[key])}%</strong><small class="${change>0?'gain':change<0?'loss':'neutral'}">${change>0?'Sube':change<0?'Baja':'Sin cambio'}${change?` ${Math.abs(change)} puntos`:''}</small></span>`}).join('')||'<span>Las reservas ya están al máximo para este plan.</span>'}</span>`}
 function journalHtml(){return `<details class="campaign-journal"><summary>Mi bitácora · ${campaign.history.length} soles completados</summary>${campaign.assistedSols.length?`<p>Ayuda de práctica de Astrobot en los soles ${campaign.assistedSols.join(', ')}: repuso las reservas para ensayar otra decisión.</p>`:''}${campaign.history.map(entry=>{const config=campaignApi.days[entry.sol-1],option=config.choices.find(option=>option.id===entry.choice);return `<article><strong>Sol ${entry.sol}: ${config.title}</strong><p>${option.title}. ${option.lesson}</p>${config.clue?`<p class="campaign-clue">Pista: ${config.clue}</p>`:''}</article>`}).join('')||'<p>Aquí aparecerán tus decisiones al terminar cada sol.</p>'}</details>`}
 function missionPanel(){
  const actions=[{label:'VOLVER A LA MISIÓN',action:hideModal}];
@@ -201,31 +110,30 @@ function openConsole(){
  if(campaign.sol===1&&!inspected.has('solar:array')){message('Primero acércate a la matriz de paneles y registra lo que observas. La foto de InSight es opcional.');toast('Examina la matriz de paneles antes de usar la consola.');return}
  if(campaign.sol<=2){resolveDay(day().choices[0].id);return}
  const options=day().choices;
- showModal(`Sol ${campaign.sol} · Tu decisión`,day().title,`<p>${day().story}</p>${resourceHtml()}${playerMode==='explorador'?`<p class="campaign-tip">Astrobot: ${day().hint}</p>`:''}<div class="choices">${options.map(option=>`<button type="button" class="choice" data-campaign-choice="${option.id}"><strong>${option.title}</strong><small>${option.text}</small><span class="campaign-deltas">${deltaText(option.deltas)}</span></button>`).join('')}</div><p class="campaign-note">Cambios en puntos del juego, limitados entre 0 y 100. Desde el Sol 4, al terminar el día se consumen 4 de energía, 4 de oxígeno, 3 de alimentos y 1 de blindaje.</p>`,[{label:'VOLVER A EXPLORAR',secondary:true,action:hideModal}]);
+ showModal(`Sol ${campaign.sol} · Tu decisión`,day().title,`<p>${day().story}</p>${playerMode==='explorador'?'<p class="campaign-tip">Compara los porcentajes: ayudar a un sistema puede gastar las reservas de otro.</p>':''}<div class="choices">${options.map(option=>`<button type="button" class="choice" data-campaign-choice="${option.id}"><strong>${option.title}</strong><small>${option.text}</small>${comparisonHtml(resources(),campaignApi.apply(resources(),option.deltas),true)}</button>`).join('')}</div><p class="campaign-note">Así cambiarían las reservas con tu decisión.${campaign.sol>=4?' Al terminar el sol también se consumen recursos para mantener la base.':''}</p>`,[{label:'VOLVER A EXPLORAR',secondary:true,action:hideModal}]);
  for(const button of $('modalBody').querySelectorAll('[data-campaign-choice]'))button.addEventListener('click',()=>resolveDay(button.dataset.campaignChoice));
 }
-function resolveDay(id){const result=campaignApi.resolve(campaign,id,resources());if(!result)return;campaign=result.state;campaign.pending.healthBefore=health;setResources(result.resources);loseHealth([15,18,15][campaign.sol-1]||6,5);checklist();message(campaignNote());saveGame(true);reviewSol()}
-function healthBeforeDecision(){const value=campaign.pending?.healthBefore;return Number.isFinite(value)&&value>=0&&value<=100?value:health}
-function retryDay(){const previousHealth=healthBeforeDecision(),result=campaignApi.retry(campaign);if(!result)return;campaign=result.state;health=previousHealth;lowHealthWarned=health<=35;setResources(result.resources);checklist();message(day().hint);saveGame(true);hideModal();toast('Recuperaste las reservas anteriores. Puedes probar otro plan en la consola.')}
-function assistDay(){const previousHealth=healthBeforeDecision(),result=campaignApi.assist(campaign,resources());if(!result)return;campaign=result.state;health=previousHealth;lowHealthWarned=health<=35;setResources(result.resources);checklist();message('Astrobot repuso las reservas para que puedas practicar otra decisión. Esta ayuda queda en tu bitácora.');saveGame(true);hideModal();toast('Ayuda de práctica: cada reserva tiene al menos 35 puntos. Vuelve a la consola.')}
+function resolveDay(id){const result=campaignApi.resolve(campaign,id,resources());if(!result)return;campaign=result.state;setResources(result.resources);checklist();message(campaignNote());saveGame(true);reviewSol()}
+function retryDay(){const result=campaignApi.retry(campaign);if(!result)return;campaign=result.state;setResources(result.resources);checklist();message(day().hint);saveGame(true);hideModal();toast('Recuperaste los porcentajes anteriores. Puedes probar otro plan en la consola.')}
+function assistDay(){const result=campaignApi.assist(campaign,resources());if(!result)return;campaign=result.state;setResources(result.resources);checklist();message('Astrobot repuso las reservas para practicar otra decisión. La ayuda queda en tu bitácora.');saveGame(true);hideModal();toast('Ayuda de práctica: cada reserva tiene al menos 35%. Vuelve a la consola.')}
 function reviewSol(){
  if(campaign.finished){showEnding();return}
  if(!campaign.completed){toast('Completa primero el objetivo de hoy.');return}
  const option=day().choices.find(option=>option.id===campaign.pending.choice),projection=campaignApi.apply(resources(),campaignApi.upkeep(campaign.sol));
  const critical=Object.values(projection).some(value=>value===0);
- showModal(`Balance del Sol ${campaign.sol}`,critical?'Revisemos tu plan':campaign.sol===3?'¡Entrenamiento completado!':'Objetivo completado',`<p>${option.lesson}</p>${resourceHtml()}${day().clue?`<p class="campaign-clue">Nueva pista: ${day().clue}</p>`:''}${campaign.sol>=4?`<p>Después del consumo del sol, las reservas quedarían así:</p>${resourceHtml(projection)}`:'<p>Durante el tutorial no hay consumo entre soles. Aprende y prueba con calma.</p>'}<p>${critical?'Un sistema se quedaría sin reservas. Vuelve al estado anterior y prueba una decisión diferente.':`Recibirás ${day().reward} monedas al terminar este sol. Puedes explorar antes de continuar.`}</p>`,[
+ showModal(`Balance del Sol ${campaign.sol}`,critical?'Revisemos tu plan':campaign.sol===3?'¡Entrenamiento completado!':'Así cambió tu base',`<p>${option.lesson}</p>${comparisonHtml(campaign.pending.before,resources())}${day().clue?`<p class="campaign-clue">Nueva pista: ${day().clue}</p>`:''}${campaign.sol>=4?`<details class="campaign-journal"><summary>Reservas al terminar el sol</summary><p>La base consume 4 puntos de energía, 4 de oxígeno, 3 de alimentos y 1 de blindaje.</p>${resourceHtml(projection)}</details>`:'<p>Durante el tutorial no hay consumo entre soles. Aprende y prueba con calma.</p>'}<p>${critical?'Un sistema se quedaría sin reservas. Vuelve al estado anterior y prueba una decisión diferente.':'Puedes probar otra decisión o terminar el sol cuando quieras.'}</p>`,[
  ...(critical?campaign.assistedSols.includes(campaign.sol)?[]:[{label:'Pedir ayuda a Astrobot',action:assistDay}]:[{label:campaign.sol===10?'Terminar la misión':'Terminar el sol',action:advanceSol}]),
  {label:campaign.sol<=2?'Repetir el ejercicio':'Probar otra decisión',secondary:true,action:retryDay},
  {label:'SEGUIR EXPLORANDO',secondary:true,action:hideModal}]);
 }
 function advanceSol(){
  const result=campaignApi.advance(campaign,resources());if(!result)return;if(result.blocked){reviewSol();return}
- campaign=result.state;setResources(result.resources);checklist();earnCoins(result.reward);message(campaignNote());
+ campaign=result.state;setResources(result.resources);checklist();message(campaignNote());
  storm=!campaign.finished&&campaign.sol===6;engine?.setStorm(storm);$('world').classList.toggle('storm',storm);$('alertLabel').textContent=weatherLabel();saveGame(true);
  if(campaign.finished){showEnding();return}
- showModal(campaign.sol<=3?`Tutorial ${campaign.sol} de 3`:`Sol ${campaign.sol} de 10`,day().title,`<p class="coin-reward">+${result.reward} monedas · Sol anterior completado</p><p>${day().story}</p><p>${day().task}</p>${playerMode==='explorador'?`<p class="campaign-tip">${day().hint}</p>`:''}`, [{label:`Comenzar el Sol ${campaign.sol}`,action:hideModal}]);
+ showModal(campaign.sol<=3?`Tutorial ${campaign.sol} de 3`:`Sol ${campaign.sol} de 10`,day().title,`<p>${day().story}</p><p>${day().task}</p>${playerMode==='explorador'?`<p class="campaign-tip">${day().hint}</p>`:''}`, [{label:`Comenzar el Sol ${campaign.sol}`,action:hideModal}]);
 }
-function confirmRestart(){showModal('Nueva expedición','¿Volver al Sol 1?', '<p>Empezarás de nuevo el tutorial y la historia. Conservarás tus trajes y monedas.</p>',[{label:'Empezar otra misión',action:()=>{hideModal();restart()}},{label:'Conservar mi expedición',secondary:true,action:showEnding}])}
+function confirmRestart(){showModal('Nueva expedición','¿Volver al Sol 1?', '<p>Empezarás de nuevo el tutorial y la historia. Volverás a las reservas iniciales de la colonia.</p>',[{label:'Empezar otra misión',action:()=>{hideModal();restart()}},{label:'Conservar mi expedición',secondary:true,action:showEnding}])}
 function showEnding(){
  if(!campaign.finished)return;
  const final=campaign.history[9].after,stable=Object.values(final).every(value=>value>=25);
@@ -238,30 +146,37 @@ function interact(nearest){if(nearest?.robot&&!nearest.inside){talkToRobot(neare
  if(nearest.target.id!=='console'){
   const target=nearest.target,key=`${station.id}:${target.id}`;
   const recorded=inspected.has(key),actions=[];
-  if(station.id==='solar'&&target.id==='array')actions.push({label:'Ver una imagen real',action:()=>window.MarsDiscovery.open({showModal,onBack:()=>interact(nearest),mode:playerMode})});
-  if(!recorded)actions.push({label:'REGISTRAR HALLAZGO',secondary:actions.length>0,action:()=>{if(inspected.has(key))return;inspected.add(key);if(station.id==='greenhouse')food=Math.min(100,food+2);else if(station.id==='habitat')oxygen=Math.min(100,oxygen+1);else energy=Math.min(100,energy+1);loseHealth(6,5);hideModal();saveGame(true);toast('Hallazgo registrado. ¡Sigue explorando!')}});
+  if(station.id==='solar'&&target.id==='array')actions.push({label:'ⓘ Información con imagen',action:()=>openDiscovery(()=>interact(nearest))});
+  if(!recorded)actions.push({label:'REGISTRAR HALLAZGO',secondary:actions.length>0,action:()=>{if(inspected.has(key))return;inspected.add(key);hideModal();saveGame(true);toast('Hallazgo registrado. ¡Sigue explorando!')}});
   actions.push({label:'SEGUIR EXPLORANDO',secondary:true,action:hideModal});
   showModal('HALLAZGO EN EL MÓDULO',target.name,`<p>${target.detail}</p><p>${recorded?'Ya registraste este hallazgo. Puedes volver a consultarlo.':'Registra lo que observaste para ayudar a la colonia.'}</p>`,actions);return;
  }
  if(campaign.finished){showEnding();return}if(station.id!==day().station){toast('Puedes explorar este módulo. El objetivo de hoy está marcado en el exterior.');return}openConsole();}
 function guide(){if(campaign.finished||campaign.completed)return;if(engine?.getState().interior){toast('Sal por la puerta del módulo para seguir el marcador del exterior.');return}engine?.goTo(day().station);toast(playerMode==='explorador'?'Mira el marcador dorado y camina con WASD hasta el equipo.':'Modo Comandante: sigue el marcador dorado y usa WASD para llegar al objetivo.')}
+function openDiscovery(onBack=hideModal){window.MarsDiscovery.open({showModal,onBack,mode:playerMode,backLabel:onBack===hideModal?'Volver a explorar':'Volver al hallazgo'})}
+function updateDiscoveryMarker(data){
+ const marker=$('discoveryMarker');marker.classList.toggle('hidden',data.interior!=='solar');
+ if(data.interior!=='solar')return;
+ const point=data.discoveryMarker,place=point?.inView&&markerFits(point.x,point.y,220,72);
+ marker.classList.toggle('is-docked',!place);
+ marker.style.left=place?`${point.x}px`:'';marker.style.top=place?`${point.y}px`:'';
+}
 function updateInterior(){const id=engine?.getState().interior,station=window.MarsGfx.stations.find(s=>s.id===id);$('interiorHud').classList.toggle('hidden',!id);ui.classList.toggle('interior-mode',!!id);$('interiorName').textContent=station?.name||'';$('mobileInteract').textContent=id?'E · USAR / SALIR':'E · ENTRAR / USAR';$('world').classList.toggle('interior',!!id)}
 function hudRects(includeWaypoint=false){const selectors=['.topbar','.mission-card','.alert','.menu-pause','.controls','.astrobot','.interior-hud','.sky-note'];if(includeWaypoint)selectors.push('.waypoint');return selectors.map(selector=>document.querySelector(selector)).filter(el=>el&&getComputedStyle(el).display!=='none').map(el=>el.getBoundingClientRect())}
 function overlaps(a,b,pad=10){return a.left<b.right+pad&&a.right>b.left-pad&&a.top<b.bottom+pad&&a.bottom>b.top-pad}
 function markerFits(x,y,width,height,placed=[],includeWaypoint=false){const rect={left:x-width/2,right:x+width/2,top:y-height,bottom:y};return x>width/2+12&&x<canvas.clientWidth-width/2-12&&y>height+10&&y<canvas.clientHeight-20&&!hudRects(includeWaypoint).some(ui=>overlaps(rect,ui))&&!placed.some(other=>overlaps(rect,other,5))?rect:null}
 function updateSky(markers){const layer=$('skyLabels');layer.classList.toggle('hidden',!markers.length);$('skyNote').classList.toggle('hidden',!markers.length);while(layer.children.length<markers.length){const el=document.createElement('span');el.className='sky-label';layer.appendChild(el)}const placed=[];for(let i=0;i<layer.children.length;i++){const el=layer.children[i],p=markers[i];el.style.display='none';if(!p?.inView)continue;const rect=markerFits(p.x,p.y,Math.max(42,p.name.length*7+16),25,placed,true);if(!rect)continue;placed.push(rect);el.textContent=p.name;el.classList.toggle('fiction',p.name.startsWith('Platillo'));el.style.left=p.x+'px';el.style.top=p.y+'px';el.style.display='block'}}
-function updateTick(d){lastTick=d;const now=performance.now();if(d.moving){if(lastMoveHealthAt){const elapsed=Math.min(now-lastMoveHealthAt,5000);loseHealth(elapsed/180000,10)}lastMoveHealthAt=now}else{lastMoveHealthAt=0}saveGame();const wp=$('waypoint'),hud=$('interiorHud');if(d.interior){updateSky([]);wp.style.display='none';$('interiorHint').textContent=d.nearest.dist<2.5?`E · ${d.nearest.target.name}`:`Acércate a ${d.nearest.target.name}`;$('botStatus').textContent='● EXPLORANDO EL INTERIOR';$('fps').textContent=d.fps+' FPS';return}const robot=d.nearest.robot;const near=d.nearest.station&&d.nearest.dist<5.7;hud.classList.toggle('hidden',!robot&&!near);if(robot){const guide=robotGuides[robot.id];$('interiorName').textContent=guide.name+' / ROBOT';$('interiorHint').textContent='\u00a1Hola! Pulsa E para conversar';$('mobileInteract').textContent='E \u00b7 HABLAR'}else{$('mobileInteract').textContent='E \u00b7 ENTRAR / USAR'}if(!robot&&near){$('interiorName').textContent=d.nearest.station.name;$('interiorHint').textContent='E · Entrar al módulo'}const needed=window.MarsGfx.stations.find(station=>station.id===day().station);if(!needed){wp.style.display="none";return}const p=d.markers[needed.id];const dist=Math.hypot(needed.x-d.pos[0],needed.z-d.pos[2]);if(campaign.finished||campaign.completed||!p||!p.inView||!markerFits(p.x,p.y,145,90)){wp.style.display='none'}else{wp.style.display='flex';wp.style.left=p.x+'px';wp.style.top=p.y+'px';$('waypointTitle').textContent=needed.name;$('distance').textContent=dist<5.8?'Presiona E para entrar':`${Math.round(dist)} m`;}updateSky(d.skyMarkers||[]);if(robot){$('botStatus').textContent='ROBOT CERCANO / PULSA E'}else if(!campaign.finished&&!campaign.completed&&dist<5.8&&d.nearest.station?.id===needed.id&&Math.round(performance.now()/1100)%2===0){$('botStatus').textContent='● ENTRADA ALCANZADA · PULSA E'}else $('botStatus').textContent='● CANAL DE ASISTENCIA ACTIVO';$('fps').textContent=d.fps+' FPS';}
-function restart(){engine.leave();updateInterior();inspected.clear();campaign=campaignApi.initial();energy=62;oxygen=78;food=54;shield=68;health=100;lowHealthWarned=false;lastMoveHealthAt=0;heldFood=null;eating=false;eatRemaining=0;clearTimeout(eatTimer);eatTimer=0;engine?.setHeldFood?.(null);storm=false;stats();checklist();message(day().hint);const s=engine.getState();s.pos=[0,0,19];s.yaw=0;s.avatarYaw=0;s.camera='third';s.jumpHeight=0;s.jumpVelocity=0;s.storm=0;s.stormTarget=0;engine.setStorm(false);$('world').classList.remove('storm');$('alertLabel').textContent=weatherLabel();saveGame(true);toast('Sol 1 · Tu entrenamiento comienza. Explora con calma.')}
+function updateTick(d){lastTick=d;saveGame();updateDiscoveryMarker(d);const wp=$('waypoint'),hud=$('interiorHud');if(d.interior){updateSky([]);wp.style.display='none';$('interiorHint').textContent=d.nearest.dist<2.5?`E · ${d.nearest.target.name}`:`Acércate a ${d.nearest.target.name}`;$('botStatus').textContent='● EXPLORANDO EL INTERIOR';$('fps').textContent=d.fps+' FPS';return}const robot=d.nearest.robot;const near=d.nearest.station&&d.nearest.dist<5.7;hud.classList.toggle('hidden',!robot&&!near);if(robot){const guide=robotGuides[robot.id];$('interiorName').textContent=guide.name+' / ROBOT';$('interiorHint').textContent='\u00a1Hola! Pulsa E para conversar';$('mobileInteract').textContent='E \u00b7 HABLAR'}else{$('mobileInteract').textContent='E \u00b7 ENTRAR / USAR'}if(!robot&&near){$('interiorName').textContent=d.nearest.station.name;$('interiorHint').textContent=d.nearest.station.id==='solar'?'E · Entrar · ⓘ Foto NASA dentro':'E · Entrar al módulo'}const needed=window.MarsGfx.stations.find(station=>station.id===day().station);if(!needed){wp.style.display="none";return}const p=d.markers[needed.id];const dist=Math.hypot(needed.x-d.pos[0],needed.z-d.pos[2]);if(campaign.finished||campaign.completed||!p||!p.inView||!markerFits(p.x,p.y,145,90)){wp.style.display='none'}else{wp.style.display='flex';wp.style.left=p.x+'px';wp.style.top=p.y+'px';$('waypointTitle').textContent=needed.name;$('distance').textContent=dist<5.8?'Presiona E para entrar':`${Math.round(dist)} m`;}updateSky(d.skyMarkers||[]);if(robot){$('botStatus').textContent='ROBOT CERCANO / PULSA E'}else if(!campaign.finished&&!campaign.completed&&dist<5.8&&d.nearest.station?.id===needed.id&&Math.round(performance.now()/1100)%2===0){$('botStatus').textContent='● ENTRADA ALCANZADA · PULSA E'}else $('botStatus').textContent='● CANAL DE ASISTENCIA ACTIVO';$('fps').textContent=d.fps+' FPS';}
+function restart(){engine.leave();updateInterior();inspected.clear();campaign=campaignApi.initial();energy=62;oxygen=78;food=54;shield=68;storm=false;stats();checklist();message(day().hint);const s=engine.getState();s.pos=[0,0,19];s.yaw=0;s.avatarYaw=0;s.camera='third';s.jumpHeight=0;s.jumpVelocity=0;s.storm=0;s.stormTarget=0;engine.setStorm(false);$('world').classList.remove('storm');$('alertLabel').textContent=weatherLabel();saveGame(true);toast('Sol 1 · Tu entrenamiento comienza. Explora con calma.')}
 function toggleStorm(){storm=!storm;engine?.setStorm(storm);$('world').classList.toggle('storm',storm);$('alertLabel').textContent=weatherLabel();message(storm?'ALERTA: se ha simulado una tormenta solar. Revisa el blindaje: el evento no representa datos de la NASA en tiempo real.':campaignNote());toast(storm?'Simulación de tormenta solar activada.':'Condiciones solares simuladas normales.');}
-function initialize(){if(!engine){try{engine=window.MarsGfx.createDemo(canvas,{onTick:updateTick,onInteract:interact,onEat:eatHeldFood,onEatDone:finishEating,onBackpack:backpackModal,onEscape:()=>{if(!shade.classList.contains('hidden'))hideModal();else pauseGame();},onPanel:missionPanel,onCamera:(v)=>toast(v==='first'?'Cámara en primera persona.':'Cámara en tercera persona.')});}catch(e){console.error(e);menu.classList.remove('hidden');showModal('ERROR GRÁFICO','No se pudo cargar el escenario',`<p>${e.message}</p><p>La demo necesita un navegador moderno con WebGL 2 habilitado.</p>`,[{label:'VOLVER AL MENÚ',action:hideModal},{label:'ABRIR SIMULACIÓN ANTERIOR',secondary:true,action:()=>window.parent.location.assign('/game/legacy')}]);$('start').disabled=false;$('start').textContent='▶ COMENZAR DEMO';return false}}
+function initialize(){if(!engine){try{engine=window.MarsGfx.createDemo(canvas,{onTick:updateTick,onInteract:interact,onEscape:()=>{if(!shade.classList.contains('hidden'))hideModal();else pauseGame();},onPanel:missionPanel,onCamera:(v)=>toast(v==='first'?'Cámara en primera persona.':'Cámara en tercera persona.')});}catch(e){console.error(e);menu.classList.remove('hidden');showModal('ERROR GRÁFICO','No se pudo cargar el escenario',`<p>${e.message}</p><p>La demo necesita un navegador moderno con WebGL 2 habilitado.</p>`,[{label:'VOLVER AL MENÚ',action:hideModal},{label:'ABRIR SIMULACIÓN ANTERIOR',secondary:true,action:()=>window.parent.location.assign('/game/legacy')}]);$('start').disabled=false;$('start').textContent='▶ COMENZAR DEMO';return false}}
  return true}
-function startGame(){const startBtn=$('start');startBtn.disabled=true;startBtn.textContent='PREPARANDO COLONIA…';setTimeout(()=>{if(!initialize())return;menu.classList.add('hidden');ui.classList.remove('hidden');started=true;engine.start();engine.pause(false);loadWardrobe();startBtn.textContent='▶ COMENZAR DEMO';startBtn.disabled=false;if(loadGame()){engine.setSkin(equipped);toast(`Partida recuperada · Sol ${campaign.sol} de 10 · ${modeLabel()}.`)}else{updateMode();engine.setSkin(equipped);restart()}},60)}
-$('endSol').addEventListener('click',reviewSol);$('start').addEventListener('click',startGame);$('instructions').addEventListener('click',instructional);$('pause').addEventListener('click',pauseGame);$('wardrobe').addEventListener('click',wardrobe);$('foodShop')?.addEventListener('click',foodStore);$('backpackBtn')?.addEventListener('click',backpackModal);$('guide').addEventListener('click',guide);$('view').addEventListener('click',()=>engine?.toggleCamera());$('alert').addEventListener('click',toggleStorm);$('mobileInteract').addEventListener('click',()=>interact(engine?.getNearest()));$('mobileCamera').addEventListener('click',()=>engine?.toggleCamera());
+function startGame(){const startBtn=$('start');startBtn.disabled=true;startBtn.textContent='PREPARANDO COLONIA…';setTimeout(()=>{if(!initialize())return;menu.classList.add('hidden');ui.classList.remove('hidden');started=true;engine.start();engine.pause(false);startBtn.textContent='▶ COMENZAR DEMO';startBtn.disabled=false;if(loadGame()){toast(`Partida recuperada · Sol ${campaign.sol} de 10 · ${modeLabel()}.`)}else{updateMode();restart()}},60)}
+$('endSol').addEventListener('click',reviewSol);$('start').addEventListener('click',startGame);$('instructions').addEventListener('click',instructional);$('pause').addEventListener('click',pauseGame);$('guide').addEventListener('click',guide);$('view').addEventListener('click',()=>engine?.toggleCamera());$('alert').addEventListener('click',toggleStorm);$('mobileInteract').addEventListener('click',()=>interact(engine?.getNearest()));$('mobileCamera').addEventListener('click',()=>engine?.toggleCamera());$('discoveryMarker').addEventListener('click',()=>openDiscovery(hideModal));
 $('missionToggle').addEventListener('click',()=>setMissionCollapsed($('missionToggle').getAttribute('aria-expanded')==='true'));
 try{setMissionCollapsed(localStorage.getItem(MISSION_PANEL_KEY)==='true')}catch{setMissionCollapsed(false)}
 for(const btn of document.querySelectorAll('[data-key]')){const key=btn.dataset.key;btn.addEventListener('pointerdown',e=>{e.preventDefault();btn.setPointerCapture(e.pointerId);engine?.press(key,true)});for(const evt of ['pointerup','pointercancel','lostpointercapture'])btn.addEventListener(evt,()=>engine?.press(key,false));}
-checklist();stats();updateWallet();void loadSpaceWeather();setInterval(loadSpaceWeather,15*60*1000);
-window.addEventListener('message',event=>{if(started&&event.origin===window.location.origin&&event.source===window.parent&&event.data?.type==='toggle-backpack')backpackModal()});
+checklist();stats();void loadSpaceWeather();setInterval(loadSpaceWeather,15*60*1000);
 window.addEventListener('pagehide',()=>saveGame(true));document.addEventListener('visibilitychange',()=>{if(document.hidden)saveGame(true)});
 if(new URLSearchParams(window.location.search).has('autostart'))startGame();
 })();

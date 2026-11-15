@@ -14,10 +14,8 @@ function boot(values = new Map<string, string>()) {
   document.body.innerHTML = html.slice(html.indexOf('<body>') + 6, html.indexOf('<script src="engine.js"'));
   const world = { pos: [0, 0, 19], yaw: 0, avatarYaw: 0, pitch: 0, camera: 'third', interior: null as string | null, storm: 0, stormTarget: 0 };
   let interact: (nearest: unknown) => void = () => {};
-  type Events = { onInteract: typeof interact; onEat?: () => void; onEatDone?: () => void; onBackpack?: () => void };
-  let engineEvents: Events = { onInteract: interact };
   const engine = {
-    start: vi.fn(), pause: vi.fn(), setSkin: vi.fn(), setHeldFood: vi.fn(), triggerEat: vi.fn(() => true),
+    start: vi.fn(), pause: vi.fn(),
     leave: () => { world.interior = null; },
     setStorm: (on: boolean) => { world.stormTarget = on ? 1 : 0; },
     getState: () => world, snapshot: () => ({ ...world }),
@@ -25,7 +23,7 @@ function boot(values = new Map<string, string>()) {
   };
   const context = {
     window: { addEventListener: vi.fn(), location: { search: '?autostart=1' }, MarsGfx: {
-      skins: [{ id: 'explorer' }], stations: [], createDemo: (_: unknown, events: Events) => { engineEvents = events; interact = events.onInteract; return engine; },
+      skins: [{ id: 'explorer' }], stations: [], createDemo: (_: unknown, events: { onInteract: typeof interact }) => { interact = events.onInteract; return engine; },
     } }, document, performance: { now: () => Date.now() },
     localStorage: { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => values.set(key, value) },
     fetch: () => new Promise(() => {}), setTimeout, clearTimeout, setInterval, URLSearchParams, console,
@@ -34,8 +32,8 @@ function boot(values = new Map<string, string>()) {
   runInNewContext(readFileSync('public/horizonte/game.js', 'utf8'), context);
   vi.advanceTimersByTime(65);
   const use = (station: string, target = 'console') => interact({ inside: true, station: { id: station }, target: { id: target, name: 'Matriz de paneles', detail: 'El polvo reduce la luz.' }, dist: 1 });
-  const save = () => JSON.parse(values.get(SAVE_KEY)!) as { version: number; campaign: CampaignState; energy: number; health: number };
-  return { use, save, values, engine, events: () => engineEvents };
+  const save = () => JSON.parse(values.get(SAVE_KEY)!) as { version: number; campaign: CampaignState; energy: number; oxygen: number; food: number; shield: number };
+  return { use, save, values, engine };
 }
 
 beforeEach(() => vi.useFakeTimers());
@@ -50,11 +48,9 @@ describe('campaign UI, persistence and ending', () => {
     game.use('solar');expect(game.save().campaign.completed).toBe(false);
     game.use('solar', 'array');button('REGISTRAR HALLAZGO');game.use('solar');
     expect(game.save().campaign.completed).toBe(true);
-    expect(document.getElementById('coinCount')).toHaveTextContent('0');
     button('SEGUIR EXPLORANDO');
     document.getElementById('endSol')!.click();button('Terminar el sol');
     expect(game.save().campaign.sol).toBe(2);
-    expect(document.getElementById('coinCount')).toHaveTextContent('25');
   });
 
   it('resumes a pending decision and completes ten soles with a persistent ending and optional exploration', () => {
@@ -76,11 +72,9 @@ describe('campaign UI, persistence and ending', () => {
     expect(document.getElementById('modalTag')).toHaveTextContent('Expedición completada');
     expect(document.getElementById('modalBody')).toHaveTextContent('baliza científica');
     expect(document.getElementById('modalBody')).toHaveTextContent('No es un descubrimiento de NASA');
-    expect(document.getElementById('coinCount')).toHaveTextContent(String(api.coinTotal));
     button('Seguir explorando');expect(game.engine.pause).toHaveBeenLastCalledWith(false);
     game.use('energy');button('Seguir explorando');
     expect(game.save().campaign.finished).toBe(true);
-    expect(document.getElementById('coinCount')).toHaveTextContent(String(api.coinTotal));
     game = boot(game.values);document.getElementById('endSol')!.click();
     expect(document.getElementById('modalTag')).toHaveTextContent('Expedición completada');
     button('Iniciar otra misión');button('Conservar mi expedición');
@@ -88,16 +82,14 @@ describe('campaign UI, persistence and ending', () => {
     button('Iniciar otra misión');button('Empezar otra misión');
     expect(game.save().campaign.sol).toBe(1);
     expect(game.save().campaign.history).toHaveLength(0);
-    expect(document.getElementById('coinCount')).toHaveTextContent(String(api.coinTotal));
   });
 
-  it('continues old completed missions at Sol 4, preserving their resources and wardrobe', () => {
+  it('continues old completed missions at Sol 4, preserving their resources', () => {
     const values = new Map([[SAVE_KEY, JSON.stringify({ version: 1, step: 3, mode: 'comandante', world: {}, energy: 95, oxygen: 84, food: 63, shield: 74, inspected: ['solar:array'] })]]);
     const game = boot(values);
     expect(game.save().version).toBe(2);
     expect(game.save().campaign.sol).toBe(4);
     expect(game.save().energy).toBe(95);
-    expect(document.getElementById('coinCount')).toHaveTextContent('110');
     expect(document.getElementById('modeBadge')).toHaveTextContent('Comandante');
   });
 
@@ -114,7 +106,6 @@ describe('campaign UI, persistence and ending', () => {
     game = boot(values);expect(game.save().campaign.assistedSols).toEqual([4]);
     game.use('greenhouse');document.querySelector<HTMLButtonElement>('[data-campaign-choice="ration"]')!.click();
     button('Terminar el sol');expect(game.save().campaign.sol).toBe(5);
-    expect(document.getElementById('coinCount')).toHaveTextContent('140');
   });
 
   it('recognizes a balanced ending and keeps its report unchanged during free exploration', () => {
@@ -137,43 +128,37 @@ describe('campaign UI, persistence and ending', () => {
     expect(document.getElementById('modalTitle')).toHaveTextContent('Aurora-1 mira al futuro');
   });
 
-  it('preserves health and backpack while consuming food once and pausing its healing in menus', () => {
-    const values = new Map([
-      [SAVE_KEY, JSON.stringify({ version: 1, step: 0, world: {}, energy: 62, oxygen: 78, food: 54, shield: 68, health: 40 })],
-      ['astrocolony-wardrobe-v1', JSON.stringify({ coins: 100, owned: ['explorer'], equipped: 'explorer', backpack: { juice: 1 } })],
-    ]);
-    let game = boot(values);
-    expect(document.getElementById('health')).toHaveTextContent('40');
-    document.getElementById('foodShop')!.click();
-    document.querySelector<HTMLButtonElement>('[data-food="apricots"]')!.click();
-    button('VOLVER AL JUEGO');game.events().onEat?.();
-    expect(JSON.parse(values.get('astrocolony-wardrobe-v1')!).backpack).toEqual({ juice: 1 });
-    vi.advanceTimersByTime(360);
-    const partialHealth = document.getElementById('health')!.textContent;
-    game.events().onBackpack?.();vi.advanceTimersByTime(1000);
-    expect(document.getElementById('health')).toHaveTextContent(partialHealth!);
-    document.querySelector<HTMLButtonElement>('[data-bp="juice"]')!.click();
-    expect(document.getElementById('modalTag')).toHaveTextContent('MOCHILA DEL ASTRONAUTA');
-    button('CERRAR (CTRL+R)');game.events().onEatDone?.();
-    expect(game.save().health).toBe(50);
-    game.events().onEatDone?.();expect(game.save().health).toBe(50);
-    game = boot(values);
-    expect(game.save().campaign.sol).toBe(1);
-    expect(game.save().health).toBe(50);
-    expect(document.getElementById('coinCount')).toHaveTextContent('92');
-    document.getElementById('backpackBtn')!.click();
-    expect(document.querySelector('[data-bp="juice"]')).not.toBeNull();
-    expect(document.querySelector('[data-bp="apricots"]')).toBeNull();
+  it('previews and applies engineering trade-offs, and restores every percentage when retrying', () => {
+    const values = new Map([[SAVE_KEY, JSON.stringify({ version: 1, step: 2, world: {}, energy: 85, oxygen: 78, food: 54, shield: 68 })]]);
+    let game = boot(values);game.use('energy');
+    const plan = document.querySelector<HTMLButtonElement>('[data-campaign-choice="habitat"]')!;
+    expect(plan.querySelector('[data-resource="food"]')).toHaveTextContent('54% → 38%');
+    expect(plan.querySelector('[data-resource="oxygen"]')).toHaveTextContent('78% → 96%');
+    expect(game.save().energy).toBe(85);
+    plan.click();
+    expect(document.getElementById('energy')).toHaveTextContent('100 %');
+    expect(document.getElementById('oxygen')).toHaveTextContent('96 %');
+    expect(document.getElementById('food')).toHaveTextContent('38 %');
+    expect(document.getElementById('shield')).toHaveTextContent('61 %');
+    expect(document.querySelector('#modalBody [data-resource="food"]')).toHaveTextContent('Baja 16 puntos');
+    game = boot(values);document.getElementById('endSol')!.click();button('Probar otra decisión');
+    expect(game.save()).toMatchObject({ energy: 85, oxygen: 78, food: 54, shield: 68 });
+    game.use('energy');document.querySelector<HTMLButtonElement>('[data-campaign-choice="balanced"]')!.click();
+    expect(game.save()).toMatchObject({ energy: 95, oxygen: 84, food: 63, shield: 74 });
+    button('Terminar el sol');expect(game.save().campaign.sol).toBe(4);
   });
 
-  it('restores health when retrying a saved tutorial decision without repeating coins', () => {
-    const values = new Map([[SAVE_KEY, JSON.stringify({ version: 1, step: 1, world: {}, energy: 67, oxygen: 78, food: 54, shield: 68, health: 50 })]]);
-    let game = boot(values);game.use('regulator');expect(game.save().health).toBe(32);
-    game = boot(values);document.getElementById('endSol')!.click();button('Repetir el ejercicio');
-    expect(game.save().health).toBe(50);
-    expect(document.getElementById('coinCount')).toHaveTextContent('25');
-    game.use('regulator');button('Terminar el sol');
-    expect(game.save().health).toBe(32);
-    expect(document.getElementById('coinCount')).toHaveTextContent('60');
+  it('loads existing missions with only the four base resources in the interface', () => {
+    const values = new Map([
+      [SAVE_KEY, JSON.stringify({ version: 1, step: 3, world: {}, energy: 95, oxygen: 84, food: 63, shield: 74, health: 5 })],
+      ['astrocolony-wardrobe-v1', JSON.stringify({ coins: 100, backpack: { juice: 1 } })],
+    ]);
+    const game = boot(values);
+    expect(game.save().campaign.sol).toBe(4);
+    expect(document.querySelectorAll('.vital')).toHaveLength(4);
+    expect(document.querySelector('#coinCount, #healthVital, #wardrobe, #foodShop, #backpackBtn')).toBeNull();
+    expect(document.querySelector('.controls')).not.toHaveTextContent(/Mochila|Comer/);
+    expect(game.save()).toMatchObject({ energy: 95, oxygen: 84, food: 63, shield: 74 });
   });
+
 });

@@ -11,10 +11,9 @@ export type CampaignState = {
 type Transition = { state: CampaignState; resources: Resources };
 export type CampaignApi = {
   days: { station: string; choices: { id: string }[]; clue?: string }[];
-  coinTotal: number;
   initial: () => CampaignState;
   resolve: (state: CampaignState, id: string, resources: Resources) => Transition | null;
-  advance: (state: CampaignState, resources: Resources) => ({ blocked: false; reward: number } & Transition) | { blocked: true } | null;
+  advance: (state: CampaignState, resources: Resources) => ({ blocked: false } & Transition) | { blocked: true } | null;
   retry: (state: CampaignState) => Transition | null;
   assist: (state: CampaignState, resources: Resources) => Transition | null;
   restore: (raw: unknown) => CampaignState | null;

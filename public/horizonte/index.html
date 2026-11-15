@@ -1519,223 +1519,6 @@
             gap: 8px
         }
 
-        .coin-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            color: #ffe3a1;
-            border: 1px solid #e2b26677;
-            border-radius: 99px;
-            background: #5b3c1c99;
-            padding: 4px 8px;
-            font-size: 12px;
-            font-weight: 800;
-            white-space: nowrap
-        }
-
-        .coin-pct {
-            font-size: 10px;
-            font-weight: 700;
-            color: #ffd08a;
-            opacity: .92
-        }
-
-        .mission-foot #wardrobe,
-        .mission-foot #foodShop {
-            grid-column: 1/-1;
-            background: #594021b8;
-            border-color: #e1b76d;
-            color: #fff0c1
-        }
-
-        .mission-foot #foodShop {
-            background: #24483cb8;
-            border-color: #74c9a3;
-            color: #e3fff1
-        }
-
-        .vital.low .num {
-            color: #ff8a96
-        }
-
-        .dialog .coin-reward {
-            color: #ffe7a4;
-            background: #5c421e;
-            border: 1px solid #dbb86d;
-            border-radius: 8px;
-            padding: 10px 12px;
-            font-weight: 800;
-            text-align: center;
-            margin: 0 0 16px
-        }
-
-        .skin-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 10px;
-            margin-top: 18px
-        }
-
-        .food-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 10px;
-            margin-top: 16px
-        }
-
-        .food-card {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            gap: 8px;
-            padding: 11px 12px;
-            border: 1px solid #536b66;
-            border-radius: 10px;
-            background: #1f2e30
-        }
-
-        .food-head {
-            display: flex;
-            align-items: center;
-            gap: 9px
-        }
-
-        .food-icon {
-            font-size: 24px;
-            line-height: 1
-        }
-
-        .food-card strong {
-            display: block;
-            color: #f9f5e8;
-            font-size: 13px
-        }
-
-        .food-card small {
-            display: block;
-            color: #c9d6d3;
-            font-size: 11px;
-            line-height: 1.35
-        }
-
-        .food-meta {
-            color: #9ae8c4;
-            font-size: 11px;
-            font-weight: 750
-        }
-
-        .food-card button {
-            min-height: 34px;
-            background: #2d6e53;
-            color: #ebfff5;
-            border: 1px solid #75cfa6;
-            border-radius: 6px;
-            font-weight: 800;
-            font-size: 11px
-        }
-
-        .food-card button:disabled {
-            opacity: .52;
-            cursor: not-allowed
-        }
-
-        .skin-card {
-            display: grid;
-            grid-template-columns: 58px 1fr;
-            grid-template-rows: auto auto;
-            align-items: center;
-            gap: 8px 10px;
-            min-width: 0;
-            padding: 12px;
-            border: 1px solid #617179;
-            border-radius: 10px;
-            background: #243138
-        }
-
-        .skin-card strong {
-            display: block;
-            color: #f9f5e8;
-            font-size: 13px
-        }
-
-        .skin-card small {
-            display: block;
-            color: #d5d6d0;
-            font-size: 11px;
-            margin-top: 3px
-        }
-
-        .skin-card button {
-            grid-column: 1/-1;
-            min-height: 34px;
-            background: #9b6236;
-            color: #fff4df;
-            border: 1px solid #e3b37b;
-            border-radius: 6px;
-            font-weight: 800;
-            font-size: 11px
-        }
-
-        .skin-card button:disabled {
-            opacity: .58;
-            cursor: not-allowed
-        }
-
-        .skin-preview {
-            position: relative;
-            width: 58px;
-            height: 65px;
-            border-radius: 8px;
-            background: radial-gradient(circle at 50% 65%, #8c706055, #141f25);
-            overflow: hidden
-        }
-
-        .skin-head {
-            position: absolute;
-            z-index: 3;
-            left: 18px;
-            top: 5px;
-            width: 24px;
-            height: 23px;
-            border-radius: 45%;
-            background: var(--helmet);
-            border: 2px solid var(--accent)
-        }
-
-        .skin-head::after {
-            content: "";
-            position: absolute;
-            left: 4px;
-            top: 7px;
-            width: 14px;
-            height: 7px;
-            border-radius: 5px;
-            background: #153845
-        }
-
-        .skin-body {
-            position: absolute;
-            z-index: 2;
-            left: 13px;
-            top: 27px;
-            width: 34px;
-            height: 34px;
-            border-radius: 11px 11px 5px 5px;
-            background: var(--suit);
-            border-bottom: 5px solid var(--accent)
-        }
-
-        .skin-pack {
-            position: absolute;
-            z-index: 1;
-            left: 7px;
-            top: 30px;
-            width: 46px;
-            height: 26px;
-            border-radius: 7px;
-            background: var(--pack)
-        }
-
         .menu-actions {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1959,11 +1742,6 @@
                 grid-template-columns: 1fr;
                 max-width: 340px
             }
-
-            .skin-grid,
-            .food-grid {
-                grid-template-columns: 1fr
-            }
         }
 
         .mission-day .mode-badge {
@@ -2015,9 +1793,6 @@
         }
 
         @media(max-width:700px) {
-            .mission-card .coin-pct {
-                display: none
-            }
 
             .mission-heading {
                 gap: 4px
@@ -2086,76 +1861,10 @@
                 grid-template-columns: 1fr
             }
         }
-        .mc-inv {
-            background: #c6c6c6;
-            border: 3px solid #373737;
-            box-shadow: inset 3px 3px 0 #fff, inset -3px -3px 0 #555;
-            border-radius: 6px;
-            padding: 12px;
-            color: #3f3f3f;
-            margin-top: 8px;
-        }
-        .mc-title {
-            font-size: 13px;
-            font-weight: 800;
-            color: #3a3a3a;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .mc-grid, .mc-hotbar {
-            display: grid;
-            grid-template-columns: repeat(9, minmax(0, 1fr));
-            gap: 3px;
-        }
-        .mc-hotbar {
-            margin-top: 10px;
-            padding-top: 8px;
-            border-top: 2px solid #8b8b8b;
-        }
-        .mc-slot {
-            position: relative;
-            aspect-ratio: 1;
-            background: #8b8b8b;
-            border: 2px solid;
-            border-color: #373737 #fff #fff #373737;
-            display: grid;
-            place-items: center;
-            font-size: 20px;
-            padding: 0;
-            color: #fff;
-        }
-        .mc-slot.has-item {
-            cursor: pointer;
-        }
-        .mc-slot.has-item:hover {
-            background: #a4a4a4;
-        }
-        .mc-slot.active {
-            outline: 2px solid #ffd27a;
-            outline-offset: -2px;
-            background: #9f9882;
-        }
-        .mc-count {
-            position: absolute;
-            right: 2px;
-            bottom: 1px;
-            font-size: 11px;
-            font-weight: 900;
-            color: #fff;
-            text-shadow: 1px 1px 0 #222, -1px 0 0 #222;
-            line-height: 1;
-            pointer-events: none;
-        }
-        .mc-tip {
-            margin-top: 10px;
-            font-size: 12px;
-            color: #d6e4e6;
-        }
 .mars-discovery{max-width:100%;text-align:left}.mars-photo{margin:16px 0}.mars-photo img{display:block;width:100%;height:min(36dvh,300px);object-fit:contain;background:#10171b;border-radius:8px}.mars-photo img[hidden],.mars-photo figcaption[hidden]{display:none}.mars-photo figcaption{margin-top:7px;font-size:12px;color:#bdcbd0}.dialog .mars-explanation{font-size:17px;color:#fff4df;line-height:1.5}.dialog .mars-connection{border-left:3px solid #efc17e;padding-left:13px}.mars-details{margin-top:14px;border-top:1px solid #70858b66}.mars-details summary{min-height:44px;display:flex;align-items:center;cursor:pointer;color:#bceef2;font-weight:700;font-size:14px}.mars-details summary::before{content:'＋';margin-right:9px}.mars-details[open]>summary::before,.mars-original[open]>summary::before{content:'−'}.mars-details a{color:#bceef2;text-underline-offset:3px;display:inline-block;padding:12px 0;font-size:13px}.mars-original p{overflow-wrap:anywhere}.dialog .mars-note{font-size:12px;color:#b8c4c8;margin-bottom:0}.mars-retry{min-height:44px}#modalShade button:focus-visible,#modalShade a:focus-visible,#modalShade summary:focus-visible{outline:3px solid #bceef2;outline-offset:4px}
 .mission-foot #endSol{grid-column:1/-1;min-height:44px;background:#c68142;color:#171c22;border-color:#f6ca86;font-size:13px}.mission-foot #endSol.hidden{display:none}.campaign-deltas{display:block;margin-top:9px;font-size:12px;color:#f5deaa;line-height:1.5}.dialog .campaign-note{font-size:12px;color:#b9ced1;line-height:1.5}.dialog .campaign-tip,.dialog .campaign-clue{padding:12px;border-left:3px solid #8edbe5;background:#153039;color:#e9f4ed}.campaign-journal{margin:16px 0;border-top:1px solid #76858b66}.campaign-journal summary{cursor:pointer;min-height:44px;display:flex;align-items:center;color:#bceef2;font-weight:700}.campaign-journal article{padding:12px 0;border-bottom:1px solid #76858b44}.campaign-journal article strong{color:#f9deaa}.dialog .campaign-journal article p{margin:6px 0;font-size:13px}.dialog h3{margin-top:20px;color:#f9deaa;font-size:17px}.mission-card{overflow-y:auto;max-height:calc(100dvh - 380px)}@media(max-width:700px){.mission-card{max-height:calc(100dvh - 240px)}}
     </style>
+<link rel="stylesheet" href="learning.css" />
 </head>
 
 <body>
@@ -2175,21 +1884,21 @@
  <div id="skyLabels" aria-label="Cuerpos celestes y naves visibles"></div><div class="sky-note" id="skyNote">Planetas: representación visual · Platillos y marcianos: ficción</div>
  <div class="topbar">
   <div class="mini-brand"><strong>HORIZONTE</strong><span>COLONIA AURORA—1</span></div>
-  <div class="vitals" aria-label="Recursos de la base">
+  <div class="vitals" aria-label="Recursos de la base" aria-live="polite" aria-atomic="true">
    <div class="vital"><span class="symbol" style="color:#ffd077">ϟ</span><span><span class="vl">Energía</span><br><b class="num" id="energy">62 %</b></span></div>
    <div class="vital"><span class="symbol">💧</span><span><span class="vl">Oxígeno</span><br><b class="num" id="oxygen">78 %</b></span></div>
    <div class="vital"><span class="symbol">🌿</span><span><span class="vl">Alimentos</span><br><b class="num" id="food">54 %</b></span></div>
    <div class="vital"><span class="symbol">⬡</span><span><span class="vl">Blindaje</span><br><b class="num" id="shield">68 %</b></span></div>
-   <div class="vital" id="healthVital"><span class="symbol" style="color:#ff7b8a">❤</span><span><span class="vl">Vida</span><br><b class="num" id="health">100 %</b></span></div>
   </div>
   <div class="mission-day"><b id="missionSol">Sol 1 de 10</b><small>Misión: Marte</small><small id="modeBadge" class="mode-badge">Explorador · 7–9</small></div>
  </div>
- <div class="mission-card" id="missionCard"><div class="mission-heading"><div class="label" id="missionPhase">Tutorial 1 de 3</div><div class="mission-heading-actions"><span class="coin-pill" title="Monedas ganadas completando misiones"><svg aria-hidden="true" viewBox="0 0 16 16" width="13" height="13" style="flex:none"><circle cx="8" cy="8" r="7" fill="#f5c451" stroke="#b87d1e" stroke-width="1.3"/><circle cx="8" cy="8" r="4.3" fill="none" stroke="#fff1b8" stroke-width="1"/></svg><b id="coinCount">0</b><small id="coinPct" class="coin-pct">(0%)</small></span><button type="button" id="missionToggle" class="mission-toggle" aria-label="Ocultar misión" aria-controls="missionDetails" aria-expanded="true" title="Ocultar misión"><svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4 4-4"/></svg></button></div></div><div id="missionDetails"><h2 id="missionTitle">Conoce la base</h2><div id="checks" class="checks" aria-live="polite"></div><div class="mission-foot"><button id="guide" class="smallbtn">⌖ &nbsp; IR AL OBJETIVO</button><button id="view" class="smallbtn">◎ &nbsp; CÁMARA</button><button id="wardrobe" class="smallbtn">◈ &nbsp; ARMARIO · APARIENCIAS</button><button id="endSol" class="smallbtn hidden">Terminar el sol</button><button id="foodShop" class="smallbtn">🍽️ &nbsp; SUMINISTROS · COMIDA</button><button id="backpackBtn" class="smallbtn" style="grid-column:1/-1;background:#3a3529b8;border-color:#c9b88a;color:#fff6d8">🎒 &nbsp; MOCHILA · M / CTRL+R</button></div></div></div>
+ <div class="mission-card" id="missionCard"><div class="mission-heading"><div class="label" id="missionPhase">Tutorial 1 de 3</div><div class="mission-heading-actions"><button type="button" id="missionToggle" class="mission-toggle" aria-label="Ocultar misión" aria-controls="missionDetails" aria-expanded="true" title="Ocultar misión"><svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4 4-4"/></svg></button></div></div><div id="missionDetails"><h2 id="missionTitle">Conoce la base</h2><div id="checks" class="checks" aria-live="polite"></div><div class="mission-foot"><button id="guide" class="smallbtn">⌖ &nbsp; IR AL OBJETIVO</button><button id="view" class="smallbtn">◎ &nbsp; CÁMARA</button><button id="endSol" class="smallbtn hidden">Terminar el sol</button></div></div></div>
  <button class="alert" id="alert" title="Alternar la simulación de tormenta solar"><span class="alerticon">☀</span><span><strong>Alerta de clima espacial</strong><small id="alertLabel">Actividad solar elevada (simulación)</small></span><span class="arrow">›</span></button>
  <div class="waypoint" id="waypoint"><div class="diamond"><span>!</span></div><strong id="waypointTitle">Paneles solares</strong><small id="distance">25 m</small></div>
  <div class="interior-hud hidden" id="interiorHud"><strong id="interiorName">Módulo</strong><span id="interiorHint">Explora el interior</span></div>
+ <button type="button" id="discoveryMarker" class="discovery-marker hidden" aria-label="Información con imagen de NASA sobre la matriz de paneles"><span aria-hidden="true">ⓘ</span><span>Información con imagen<small>Matriz de paneles · NASA</small></span></button>
  <div class="interior-reticle" aria-hidden="true"></div>
-  <div class="controls"><div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>Mover</span></div><div><kbd>Espacio</kbd><span>Saltar</span></div><div><kbd>Mouse</kbd><span>Mirar</span></div><div><kbd>E</kbd><span>Entrar / usar / hablar</span></div><div><kbd>Ctrl</kbd><kbd>E</kbd><span>Comer</span></div><div><kbd>Ctrl</kbd><kbd>R</kbd><span>/</span><kbd>M</kbd><span>Mochila</span></div><div><kbd>V</kbd><span>Cambiar vista</span></div><div><kbd>P</kbd><span>Panel de base</span></div><div><kbd>Esc</kbd><span>Pausa</span></div></div>
+  <div class="controls"><div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>Mover</span></div><div><kbd>Espacio</kbd><span>Saltar</span></div><div><kbd>Mouse</kbd><span>Mirar</span></div><div><kbd>E</kbd><span>Entrar / usar / hablar</span></div><div><kbd>V</kbd><span>Cambiar vista</span></div><div><kbd>P</kbd><span>Panel de base</span></div><div><kbd>Esc</kbd><span>Pausa</span></div></div>
  <div class="astrobot"><div class="botavatar" aria-hidden="true"><div class="botface"><i></i><i></i></div></div><div class="astrocopy"><div class="botname">ASTROBOT <span style="font-size:12px;float:right">▥</span></div><p id="botText" aria-live="polite">El sistema de energía está inestable. Revisemos los paneles solares antes de que empeore.</p><div class="botstat" id="botStatus">● CANAL DE ASISTENCIA ACTIVO</div></div></div>
  <button class="menu-pause" id="pause">☰ &nbsp; MENÚ · ESC</button>
  <div class="mobile-controls"><div class="dpad"><div></div><button data-key="KeyW" aria-label="Adelante">↑</button><div></div><button data-key="KeyA" aria-label="Izquierda">←</button><button data-key="KeyS" aria-label="Atrás">↓</button><button data-key="KeyD" aria-label="Derecha">→</button></div></div>
