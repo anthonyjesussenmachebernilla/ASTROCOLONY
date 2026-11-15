@@ -195,7 +195,12 @@ function smallDetails(b){
  for(const xx of [-8,9]){box(b,xx,.08,8,4,.1,4,'#373636');for(let i=0;i<4;i++){box(b,xx-1.6+i, .15,8,.12,.02,3.8,'#6f5e4f')}}
 }
 const skinCatalog=[
- {id:'explorer',name:'Explorador',suit:'#bbb8ab',helmet:'#d4d1c2',pack:'#575954',visor:'#1a3c45',accent:'#87c2c0',boots:'#504e4b'},
+ {id:'explorer',name:'Explorador',price:0,suit:'#bbb8ab',helmet:'#d4d1c2',pack:'#575954',visor:'#1a3c45',accent:'#87c2c0',boots:'#504e4b'},
+ {id:'solar',name:'Ingeniero solar',price:25,suit:'#d9a65b',helmet:'#f0d49c',pack:'#4d4233',visor:'#1c3542',accent:'#ffd275',boots:'#453a2e'},
+ {id:'botanic',name:'Guardiana verde',price:55,suit:'#6fae86',helmet:'#cbe8d4',pack:'#385243',visor:'#173832',accent:'#8ff0b0',boots:'#34473b'},
+ {id:'crimson',name:'Piloto de Marte',price:80,suit:'#c9624c',helmet:'#edd5cc',pack:'#573630',visor:'#1b2c3b',accent:'#ff9b7a',boots:'#472d29'},
+ {id:'cobalt',name:'Comandante orbital',price:110,suit:'#527eb8',helmet:'#d4e5f7',pack:'#30425c',visor:'#122940',accent:'#7ad4ff',boots:'#2c3a4f'},
+ {id:'obsidian',name:'Sombra lunar',price:150,suit:'#3a404a',helmet:'#8fa0b3',pack:'#20252c',visor:'#0f2838',accent:'#7df9ff',boots:'#1b1f26'},
 ];
 function astronaut(body,leftArm,rightArm,leftLeg,rightLeg,skin){
  // Adult scale ~2.3 m; original chunky suit silhouette with articulated limbs.
