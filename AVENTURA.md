@@ -1,6 +1,8 @@
 # Aventura educativa Aurora
 
-La aventura se abre en `/game`. La introducción y la configuración permiten elegir **Con compañía** o **Por mi cuenta**, y activar botones de lectura en voz alta. No hay lectura automática; la voz disponible depende del navegador.
+La aventura completa se abre en `/game/legacy`. La introducción y la configuración permiten elegir **Con compañía** o **Por mi cuenta**, y activar botones de lectura en voz alta. No hay lectura automática; la voz disponible depende del navegador.
+
+`/game` abre la demo independiente HORIZONTE. Sus tres objetivos y reservas viven en memoria y se reinician al recargar: todavía no usa el guardado de misiones ni el cuaderno de la aventura completa. El menú de pausa ofrece **Abrir aventura completa**. **Continuar**, el regreso desde resultados y el rescate dirigen a la versión persistida en `/game/legacy`.
 
 La pantalla de exploración muestra las reservas y una sola tarjeta con el siguiente objetivo. No abre paneles automáticamente. La tarjeta abre **Misión**, y **Mi base** abre las decisiones: se revisa una tarea a la vez. El mismo panel incluye **Cuaderno**; el menú **Más opciones** contiene módulos, ciencia, ajustes y controles. La cámara se elige desde **Vista**, y Tab abre la base. Las pistas se muestran cuando se piden.
 

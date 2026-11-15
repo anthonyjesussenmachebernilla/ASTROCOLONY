@@ -31,7 +31,7 @@ describe('menú principal', () => {
     expect(window.localStorage.getItem(ACTIVE_MISSION_STORAGE_KEY)).toBe('new-mission-123');
   });
 
-  it('Continuar abre solo una misión guardada y válida', async () => {
+  it('Continuar abre la partida persistida y no la demo independiente', async () => {
     window.localStorage.setItem(ACTIVE_MISSION_STORAGE_KEY, 'saved-mission-123');
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ mission: { status: 'IN_PROGRESS' } }) });
     vi.stubGlobal('fetch', fetchMock);
@@ -40,7 +40,7 @@ describe('menú principal', () => {
     const continueButton = screen.getByRole('button', { name: /Continuar/i });
     await waitFor(() => expect(continueButton).toBeEnabled());
     fireEvent.click(continueButton);
-    await waitFor(() => expect(push).toHaveBeenCalledWith('/game'));
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/game/legacy'));
     expect(fetchMock).toHaveBeenCalledWith('/api/missions/saved-mission-123');
   });
 

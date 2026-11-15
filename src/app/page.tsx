@@ -68,7 +68,7 @@ export default function HomePage() {
       }
       const data = await response.json() as { mission?: { status?: string } };
       if (!data.mission?.status) throw new Error('La partida guardada no es válida.');
-      router.push(data.mission?.status === 'IN_PROGRESS' ? '/game' : '/results');
+      router.push(data.mission?.status === 'IN_PROGRESS' ? '/game/legacy' : '/results');
     } catch {
       setMenuError('No pudimos recuperar esa partida. Revisa la conexión o comienza una nueva misión.');
       setMenuBusy(false);

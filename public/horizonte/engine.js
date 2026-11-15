@@ -38,7 +38,6 @@ const hash=(x,z)=>{let v=Math.sin(x*127.1+z*311.7)*43758.5453123;return v-Math.f
 const noise=(x,z)=>{let i=Math.floor(x),k=Math.floor(z),a=x-i,b=z-k; a=a*a*(3-2*a);b=b*b*(3-2*b);return mix(mix(hash(i,k),hash(i+1,k),a),mix(hash(i,k+1),hash(i+1,k+1),a),b)};
 const fbm=(x,z)=>.56*noise(x,z)+.27*noise(x*2.12,z*2.12)+.13*noise(x*4.3,z*4.3)+.04*noise(x*8.7,z*8.7);
 function height(x,z){const r=Math.hypot(x*.92,z*.8); const d=smooth(25,57,r);return ((fbm(x*.063,z*.063)-.42)*10 + Math.sin(x*.075+z*.09)*1.3)*d + (fbm(x*.2,z*.2)-.5)*.3;}
-const vertices=[];
 class Builder {
  constructor(){this.v=[];this.i=[];}
  tri(a,b,c,color='#867060',em=0,metal=0,grain=0.5){
