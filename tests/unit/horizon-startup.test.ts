@@ -7,11 +7,12 @@ function startDemo(failGraphics: boolean) {
   document.body.innerHTML = html.slice(html.indexOf('<body>') + 6, html.indexOf('</body>'));
   const scheduled: (() => void)[] = [];
   const navigate = vi.fn();
-  const engine = { start: vi.fn(), pause: vi.fn(), getState: () => ({ pos: [0, 0, 19], yaw: 0, camera: 'third', storm: 0, stormTarget: 0 }) };
+  const engine = { start: vi.fn(), pause: vi.fn(), leave: vi.fn(), setSkin: vi.fn(), snapshot: () => ({}), getState: () => ({ pos: [0, 0, 19], yaw: 0, camera: 'third', storm: 0, stormTarget: 0 }) };
   const context = {
     document,
-    window: { location: { search: '?autostart=1' }, parent: { location: { assign: navigate } }, MarsGfx: { createDemo: () => { if (failGraphics) throw new Error('WebGL 2 no disponible'); return engine; } } },
-    localStorage: { getItem: () => null },
+    window: { addEventListener: vi.fn(), location: { search: '?autostart=1' }, parent: { location: { assign: navigate } }, MarsGfx: { skins: [{ id: 'explorer' }], stations: [], createDemo: () => { if (failGraphics) throw new Error('WebGL 2 no disponible'); return engine; } } },
+    localStorage: { getItem: () => null, setItem: vi.fn() },
+    performance: { now: () => 1000 },
     URLSearchParams,
     fetch: () => new Promise(() => {}),
     setTimeout: (callback: () => void) => { scheduled.push(callback); return scheduled.length; },

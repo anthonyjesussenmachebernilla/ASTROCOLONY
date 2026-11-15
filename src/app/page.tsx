@@ -6,6 +6,8 @@ import { FolderOpen, Play, Settings2, ShieldCheck, Sprout, X } from 'lucide-reac
 import { ACTIVE_MISSION_STORAGE_KEY, MISSION_CHANGED_EVENT, useGameStore } from '@/stores/game.store';
 import { ExplorerPreferences } from '@/modules/adventure/presentation/ExplorerPreferences';
 
+const HORIZONTE_SAVE_KEY = 'astrocolony-horizonte-save-v1';
+
 function subscribeToSavedMission(onChange: () => void) {
   window.addEventListener('storage', onChange);
   window.addEventListener(MISSION_CHANGED_EVENT, onChange);
@@ -16,7 +18,7 @@ function subscribeToSavedMission(onChange: () => void) {
 }
 
 function savedMissionSnapshot() {
-  return Boolean(window.localStorage.getItem(ACTIVE_MISSION_STORAGE_KEY));
+  return Boolean(window.localStorage.getItem(HORIZONTE_SAVE_KEY) || window.localStorage.getItem(ACTIVE_MISSION_STORAGE_KEY));
 }
 
 export default function HomePage() {
@@ -40,6 +42,7 @@ export default function HomePage() {
     await startNewMission();
     const state = useGameStore.getState();
     if (state.isPersisted && !state.lastError) {
+      window.localStorage.removeItem(HORIZONTE_SAVE_KEY);
       router.push('/intro');
     } else {
       setMenuError(state.lastError ?? 'No se pudo crear la misión. Inténtalo otra vez.');
@@ -50,6 +53,10 @@ export default function HomePage() {
   const continueMission = async () => {
     if (menuBusy) return;
     window.localStorage.setItem('astrocolony-mode', mode);
+    if (window.localStorage.getItem(HORIZONTE_SAVE_KEY)) {
+      router.push('/game');
+      return;
+    }
     const savedId = window.localStorage.getItem(ACTIVE_MISSION_STORAGE_KEY);
     if (!savedId) {
       setMenuError('Aún no tienes una partida guardada. Pulsa Comenzar.');

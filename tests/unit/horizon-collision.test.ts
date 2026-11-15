@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 type CollisionEngine = {
   blocked: (x: number, z: number) => boolean;
   resolveMove: (x: number, z: number, dx: number, dz: number) => { x: number; z: number };
+  patrols: { x: number; z: number }[];
 };
 
 function loadCollisionEngine(): CollisionEngine {
@@ -33,5 +34,13 @@ describe('HORIZONTE world collisions', () => {
     const next = world.resolveMove(-8.6, -10.3, 1.2, 0.8);
     expect(next.x).toBe(-8.6);
     expect(next.z).toBeGreaterThan(-10.3);
+  });
+
+  it('lets the astronaut step away after a robot gets too close', () => {
+    const robot = world.patrols[0];
+    const start = { x: robot.x + 0.9, z: robot.z };
+    expect(world.blocked(start.x, start.z)).toBe(true);
+    expect(world.resolveMove(start.x, start.z, 0.2, 0).x).toBeGreaterThan(start.x);
+    expect(world.resolveMove(start.x, start.z, -0.2, 0).x).toBe(start.x);
   });
 });
