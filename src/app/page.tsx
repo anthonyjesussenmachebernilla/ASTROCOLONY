@@ -9,6 +9,11 @@ import { useGameAudio } from '@/components/GameAudioProvider';
 
 const HORIZONTE_SAVE_KEY = 'astrocolony-horizonte-save-v1';
 const GAME_MODE_KEY = 'astrocolony-mode';
+const GAME_LANG_KEY = 'astrocolony-lang';
+const SOL_CHAPTER_KEY = 'astrocolony-sol-chapter';
+
+type SolChapter = 'tutorial' | 'survival' | 'final';
+type GameLang = 'es' | 'en';
 
 function subscribeToSavedMission(onChange: () => void) {
   window.addEventListener('storage', onChange);
@@ -32,17 +37,31 @@ export default function HomePage() {
   const [menuBusy, setMenuBusy] = useState(false);
   const [menuError, setMenuError] = useState<string | null>(null);
   const [mode, setMode] = useState<'explorador' | 'comandante'>('explorador');
+  const [lang, setLang] = useState<GameLang>('es');
+  const [solChapter, setSolChapter] = useState<SolChapter>('tutorial');
   const { reducedMotion, toggleReducedMotion, loadPreferences, startNewMission } = useGameStore();
 
   useEffect(() => {
     loadPreferences();
     const savedMode = window.localStorage.getItem(GAME_MODE_KEY);
     if (savedMode === 'explorador' || savedMode === 'comandante') setMode(savedMode);
+    const savedLang = window.localStorage.getItem(GAME_LANG_KEY);
+    if (savedLang === 'es' || savedLang === 'en') setLang(savedLang);
+    const savedChapter = window.localStorage.getItem(SOL_CHAPTER_KEY);
+    if (savedChapter === 'tutorial' || savedChapter === 'survival' || savedChapter === 'final') setSolChapter(savedChapter);
   }, [loadPreferences]);
 
   const chooseMode = (choice: 'explorador' | 'comandante') => {
     setMode(choice);
     window.localStorage.setItem(GAME_MODE_KEY, choice);
+  };
+  const chooseLang = (choice: GameLang) => {
+    setLang(choice);
+    window.localStorage.setItem(GAME_LANG_KEY, choice);
+  };
+  const chooseChapter = (choice: SolChapter) => {
+    setSolChapter(choice);
+    window.localStorage.setItem(SOL_CHAPTER_KEY, choice);
   };
 
   useEffect(() => {
@@ -55,6 +74,8 @@ export default function HomePage() {
   const beginMission = async () => {
     if (menuBusy) return;
     window.localStorage.setItem(GAME_MODE_KEY, mode);
+    window.localStorage.setItem(GAME_LANG_KEY, lang);
+    window.localStorage.setItem(SOL_CHAPTER_KEY, solChapter);
     setMenuBusy(true);
     setMenuError(null);
     await startNewMission();
@@ -104,24 +125,45 @@ export default function HomePage() {
       <div className="home-hero-image fixed inset-0 -z-20" style={{ position: 'fixed', inset: 0, zIndex: -2, backgroundImage: "url('/astrocolony-home-hero.webp')", backgroundSize: 'cover', backgroundRepeat: 'no-repeat', pointerEvents: 'none' }} aria-hidden="true" />
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(8,11,19,0.24),rgba(8,11,19,0.12)_48%,rgba(8,11,19,0.55))]" aria-hidden="true" />
 
+      <div className="flex w-full max-w-6xl justify-end">
+        <div className="inline-flex items-center gap-1 rounded-full border border-white/35 bg-black/45 p-1 backdrop-blur-md">
+          <button type="button" onClick={() => chooseLang('es')} aria-pressed={lang === 'es'} className={`rounded-full px-3 py-1 text-xs font-bold transition ${lang === 'es' ? 'bg-[#ffd27a] text-slate-950' : 'text-white/80 hover:text-white'}`}>ES</button>
+          <button type="button" onClick={() => chooseLang('en')} aria-pressed={lang === 'en'} className={`rounded-full px-3 py-1 text-xs font-bold transition ${lang === 'en' ? 'bg-[#ffd27a] text-slate-950' : 'text-white/80 hover:text-white'}`}>EN</button>
+        </div>
+      </div>
+
       <div className="home-content mx-auto my-auto w-full max-w-6xl py-6">
         <h1 className="home-title font-sans font-semibold uppercase leading-none text-[#fff8eb]" style={{ textShadow: '0 0 32px rgba(255,188,115,.5), 0 7px 30px rgba(0,0,0,.95)' }}>HORIZONTE</h1>
-        <p className="mt-5 text-[clamp(0.7rem,1.4vw,1.2rem)] font-semibold tracking-[0.18em] text-[#fff4e9] drop-shadow-[0_2px_8px_#000] sm:tracking-[0.34em]">MISIÓN DE ENTRENAMIENTO ESPACIAL</p>
+        <p className="mt-5 text-[clamp(0.7rem,1.4vw,1.2rem)] font-semibold tracking-[0.18em] text-[#fff4e9] drop-shadow-[0_2px_8px_#000] sm:tracking-[0.34em]">{lang === 'en' ? 'SPACE TRAINING MISSION' : 'MISIÓN DE ENTRENAMIENTO ESPACIAL'}</p>
         <div className="mx-auto mt-9 h-px w-52 bg-gradient-to-r from-transparent via-[#ffd27a] to-transparent" aria-hidden="true" />
-        <p className="mt-4 text-xs font-bold uppercase tracking-[0.28em] text-[#ffe0b3] drop-shadow-[0_2px_8px_#000]">Colonia Aurora-1 · Marte</p>
-        <nav aria-label="Menú principal" className="mx-auto mt-8 flex w-full max-w-sm flex-col gap-3">
-          <button type="button" onClick={() => void beginMission()} disabled={menuBusy} className="inline-flex min-h-14 items-center justify-center gap-3 rounded-xl border border-[#ffd49d] bg-[rgba(145,70,31,0.84)] px-6 text-xl font-bold text-white shadow-[0_0_24px_rgba(255,168,80,0.65)] backdrop-blur-sm transition hover:bg-[#b76532] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f8d48d] disabled:cursor-wait disabled:opacity-60"><Play className="h-5 w-5 fill-current" /> {menuBusy ? 'Preparando…' : 'Comenzar'}</button>
-          <button type="button" onClick={() => void continueMission()} disabled={!hasSavedMission || menuBusy} className="inline-flex min-h-14 items-center justify-center gap-3 rounded-xl border border-white/60 bg-black/35 px-6 text-xl font-semibold text-white shadow-lg backdrop-blur-md transition hover:bg-black/60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f8d48d] disabled:cursor-not-allowed disabled:opacity-50"><FolderOpen className="h-5 w-5" /> Continuar</button>
-          <button type="button" onClick={() => setSettingsOpen(true)} className="inline-flex min-h-14 items-center justify-center gap-3 rounded-xl border border-white/60 bg-black/35 px-6 text-xl font-semibold text-white shadow-lg backdrop-blur-md transition hover:bg-black/60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f8d48d]"><Settings2 className="h-5 w-5" /> Configuración</button>
+        <p className="mt-4 text-xs font-bold uppercase tracking-[0.28em] text-[#ffe0b3] drop-shadow-[0_2px_8px_#000]">{lang === 'en' ? 'Aurora-1 Colony · Mars' : 'Colonia Aurora-1 · Marte'}</p>
+        <nav aria-label={lang === 'en' ? 'Main menu' : 'Menú principal'} className="mx-auto mt-8 flex w-full max-w-sm flex-col gap-3">
+          <button type="button" onClick={() => void beginMission()} disabled={menuBusy} className="inline-flex min-h-14 items-center justify-center gap-3 rounded-xl border border-[#ffd49d] bg-[rgba(145,70,31,0.84)] px-6 text-xl font-bold text-white shadow-[0_0_24px_rgba(255,168,80,0.65)] backdrop-blur-sm transition hover:bg-[#b76532] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f8d48d] disabled:cursor-wait disabled:opacity-60"><Play className="h-5 w-5 fill-current" /> {menuBusy ? (lang === 'en' ? 'Preparing…' : 'Preparando…') : (lang === 'en' ? 'Start' : 'Comenzar')}</button>
+          <button type="button" onClick={() => void continueMission()} disabled={!hasSavedMission || menuBusy} className="inline-flex min-h-14 items-center justify-center gap-3 rounded-xl border border-white/60 bg-black/35 px-6 text-xl font-semibold text-white shadow-lg backdrop-blur-md transition hover:bg-black/60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f8d48d] disabled:cursor-not-allowed disabled:opacity-50"><FolderOpen className="h-5 w-5" /> {lang === 'en' ? 'Continue' : 'Continuar'}</button>
+          <button type="button" onClick={() => setSettingsOpen(true)} className="inline-flex min-h-14 items-center justify-center gap-3 rounded-xl border border-white/60 bg-black/35 px-6 text-xl font-semibold text-white shadow-lg backdrop-blur-md transition hover:bg-black/60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f8d48d]"><Settings2 className="h-5 w-5" /> {lang === 'en' ? 'Settings' : 'Configuración'}</button>
         </nav>
-        {!hasSavedMission && <p className="mt-2.5 text-xs text-[#d4d2cb]/85">Continuar se activa cuando tengas una partida guardada.</p>}
+        {!hasSavedMission && <p className="mt-2.5 text-xs text-[#d4d2cb]/85">{lang === 'en' ? 'Continue activates when you have a saved mission.' : 'Continuar se activa cuando tengas una partida guardada.'}</p>}
         {menuError && <p role="alert" className="mx-auto mt-3 max-w-md rounded-xl border border-red-300/50 bg-red-950/80 p-3 text-sm text-white">{menuError}</p>}
       </div>
-      <div className="w-full pb-3">
-        <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.35em] text-[#f6eee8] drop-shadow-[0_2px_8px_#000]">Modo de juego</p>
-        <div className="flex flex-wrap items-center justify-center gap-3">
-          <button type="button" onClick={() => chooseMode('explorador')} aria-pressed={mode === 'explorador'} className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-5 font-bold backdrop-blur-sm ${mode === 'explorador' ? 'border-[#ffd27a] bg-[#6e371c]/80 text-white shadow-[0_0_18px_rgba(255,171,74,0.65)]' : 'border-white/60 bg-black/30 text-white'}`}><Sprout className="h-4 w-4" /> Explorador (7–9)</button>
-          <button type="button" onClick={() => chooseMode('comandante')} aria-pressed={mode === 'comandante'} className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-5 font-bold backdrop-blur-sm ${mode === 'comandante' ? 'border-[#ffd27a] bg-[#6e371c]/80 text-white shadow-[0_0_18px_rgba(255,171,74,0.65)]' : 'border-white/60 bg-black/30 text-white'}`}><ShieldCheck className="h-4 w-4" /> Comandante (10–12)</button>
+      <div className="w-full space-y-4 pb-3">
+        <div>
+          <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.35em] text-[#f6eee8] drop-shadow-[0_2px_8px_#000]">{lang === 'en' ? 'Game mode' : 'Modo de juego'}</p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <button type="button" onClick={() => chooseMode('explorador')} aria-pressed={mode === 'explorador'} className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-5 font-bold backdrop-blur-sm ${mode === 'explorador' ? 'border-[#ffd27a] bg-[#6e371c]/80 text-white shadow-[0_0_18px_rgba(255,171,74,0.65)]' : 'border-white/60 bg-black/30 text-white'}`}><Sprout className="h-4 w-4" /> {lang === 'en' ? 'Explorer (7–9)' : 'Explorador (7–9)'}</button>
+            <button type="button" onClick={() => chooseMode('comandante')} aria-pressed={mode === 'comandante'} className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-5 font-bold backdrop-blur-sm ${mode === 'comandante' ? 'border-[#ffd27a] bg-[#6e371c]/80 text-white shadow-[0_0_18px_rgba(255,171,74,0.65)]' : 'border-white/60 bg-black/30 text-white'}`}><ShieldCheck className="h-4 w-4" /> {lang === 'en' ? 'Commander (10–12)' : 'Comandante (10–12)'}</button>
+          </div>
+        </div>
+        <div>
+          <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.35em] text-[#ffe0b3] drop-shadow-[0_2px_8px_#000]">{lang === 'en' ? 'Campaign phase' : 'Etapa de misión'}</p>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {([
+              { id: 'tutorial', es: 'Soles 1–3: Tutorial', en: 'Sols 1–3: Tutorial' },
+              { id: 'survival', es: 'Soles 4–9: Supervivencia y pistas', en: 'Sols 4–9: Survival & Clues' },
+              { id: 'final', es: 'Sol 10: Misión final', en: 'Sol 10: Final Mission' },
+            ] as const).map(item => (
+              <button key={item.id} type="button" onClick={() => chooseChapter(item.id)} aria-pressed={solChapter === item.id} className={`inline-flex min-h-10 items-center rounded-full border px-4 text-xs font-bold backdrop-blur-sm transition ${solChapter === item.id ? 'border-[#8adbe5] bg-[#123942]/85 text-[#d7fbff] shadow-[0_0_16px_rgba(138,219,229,0.5)]' : 'border-white/45 bg-black/35 text-white/85 hover:bg-black/55'}`}>{lang === 'en' ? item.en : item.es}</button>
+            ))}
+          </div>
         </div>
       </div>
     </section>

@@ -44,9 +44,25 @@ it('awards coins for objectives and keeps purchased suits after reloading', () =
 
   const first = boot();
   const interact = (id: string) => first.handlers.onInteract?.({ inside: true, station: { id }, target: { id: 'console' }, dist: 1, atExit: false });
+  const finishSolar = () => {
+   document.getElementById('maintAction')!.click();
+   document.getElementById('maintAction')!.click();
+   for (let i = 0; i < 4; i++) document.getElementById('maintBrush')!.click();
+   document.getElementById('maintAction')!.click();
+   document.getElementById('maintAction')!.click();
+  };
+  const finishRegulator = () => {
+   document.getElementById('maintAction')!.click();
+   document.getElementById('maintAction')!.click();
+   (document.querySelector('[data-fuse="1"]') as HTMLButtonElement).click();
+   document.getElementById('maintAction')!.click();
+   document.getElementById('maintAction')!.click();
+  };
   interact('solar');
+  finishSolar();
   expect(document.getElementById('coinCount')?.textContent).toBe('25');
   interact('regulator');
+  finishRegulator();
   expect(document.getElementById('coinCount')?.textContent).toBe('60');
   interact('energy');
   document.getElementById('balance')!.click();

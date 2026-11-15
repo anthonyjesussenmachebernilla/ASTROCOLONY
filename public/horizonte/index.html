@@ -2153,18 +2153,469 @@
             font-size: 12px;
             color: #d6e4e6;
         }
+        .maint {
+            position: fixed;
+            inset: 0;
+            z-index: 45;
+            background: #070f15;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            padding: 18px 24px 16px;
+            gap: 12px;
+            color: #f4f6f3;
+        }
+        #maintGl {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            cursor: crosshair;
+            touch-action: none;
+            z-index: 0;
+        }
+        .maint-film {
+            pointer-events: none;
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse at 55% 43%, transparent 30%, rgba(4, 8, 14, .4) 100%), linear-gradient(180deg, rgba(0, 4, 12, .20), transparent 24%, transparent 68%, rgba(0, 4, 12, .46));
+            z-index: 1;
+        }
+        .maint-scan {
+            pointer-events: none;
+            position: fixed;
+            inset: 0;
+            opacity: .09;
+            background: repeating-linear-gradient(0deg, transparent 0, transparent 3px, #01090e 4px);
+            z-index: 1;
+        }
+        .maint-target {
+            position: fixed;
+            z-index: 4;
+            pointer-events: auto;
+            cursor: pointer;
+            border: 0;
+            background: none;
+            color: inherit;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        .maint-interactions {
+            position: fixed;
+            z-index: 4;
+            left: 50%;
+            bottom: 84px;
+            transform: translateX(-50%);
+            width: min(540px, calc(100vw - 24px));
+            padding: 12px 16px;
+            border: 1px solid #a4c7c75e;
+            border-radius: 9px;
+            background: linear-gradient(130deg, #091922ed, #172a2ee8);
+            box-shadow: 0 10px 32px #000a;
+            text-align: center;
+            pointer-events: auto;
+        }
+        .maint-int-name { font-size: 11px; color: #c6f1e5; letter-spacing: .13em; font-weight: 780; }
+        .maint-int-sub { font-size: 11px; color: #bacbd0; line-height: 1.4; margin: 5px 0 10px; }
+        .maint-int-row { display: flex; gap: 7px; flex-wrap: wrap; justify-content: center; align-items: center; }
+        .maint-int-row button {
+            border-radius: 6px;
+            border: 1px solid #e2b97982;
+            background: #3b3732;
+            padding: 8px 12px;
+            font-size: 11px;
+            font-weight: 780;
+            color: #ffe4b8;
+        }
+        .maint-int-row button:hover { background: #584635; }
+        .maint-int-row label { font-size: 11px; color: #f2dbb6; display: flex; align-items: center; gap: 9px; }
+        .maint-int-row input[type=range] { accent-color: #edb96b; min-width: 165px; cursor: pointer; }
+        .maint-target .ring {
+            width: 54px;
+            height: 54px;
+            border: 1px solid #f3cc83c9;
+            border-radius: 50%;
+            position: relative;
+            margin: auto;
+            box-shadow: 0 0 18px #d7a1608c, inset 0 0 10px #d7a1604d;
+            animation: maintPulse 2s infinite;
+        }
+        .maint-target .ring:before, .maint-target .ring:after {
+            content: '';
+            position: absolute;
+            background: #f5dbac;
+        }
+        .maint-target .ring:before { width: 12px; height: 1px; left: 20px; top: 26px; }
+        .maint-target .ring:after { height: 12px; width: 1px; left: 26px; top: 20px; }
+        .maint-target small {
+            background: #101c24e8;
+            border: 1px solid #cfba8999;
+            padding: 5px 8px;
+            display: block;
+            margin-top: 10px;
+            white-space: nowrap;
+            font-size: 10px;
+            color: #ffe4b1;
+            font-weight: 650;
+            letter-spacing: .05em;
+        }
+        @keyframes maintPulse {
+            50% { box-shadow: 0 0 35px #e8a559aa, inset 0 0 14px #e8a55966; transform: scale(1.1); }
+        }
+        .maint-top {
+            position: relative;
+            z-index: 3;
+            pointer-events: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+        }
+        .maint-brand strong {
+            display: block;
+            font-size: 22px;
+            font-weight: 400;
+            letter-spacing: .28em;
+        }
+        .maint-brand span {
+            font-size: 9px;
+            letter-spacing: .32em;
+            color: #9ec0c7;
+            font-weight: 700;
+        }
+        .maint-pills {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .maint-pill {
+            background: rgba(16, 26, 32, .85);
+            border: 1px solid rgba(138, 219, 229, .24);
+            border-radius: 8px;
+            padding: 8px 13px;
+            font-size: 12px;
+        }
+        .maint-pill small {
+            display: block;
+            font-size: 9px;
+            letter-spacing: .12em;
+            color: #95b8bf;
+        }
+        .maint-pill b {
+            font-size: 14px;
+            color: #f5f7f2;
+        }
+        .maint-pill.sol {
+            border-color: rgba(255, 210, 122, .45);
+            background: rgba(58, 43, 22, .65);
+        }
+        .maint-pill.sol b {
+            color: #ffd27a;
+        }
+        .maint-main {
+            position: relative;
+            z-index: 3;
+            pointer-events: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 18px;
+            min-height: 0;
+        }
+        .maint-card {
+            pointer-events: auto;
+            width: 275px;
+            background: linear-gradient(140deg, rgba(8, 23, 32, .91), rgba(9, 18, 24, .79));
+            border: 1px solid rgba(169, 196, 195, .32);
+            border-radius: 10px;
+            padding: 18px 19px;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, .45);
+            backdrop-filter: blur(10px);
+        }
+        .maint-card h3 {
+            margin: 8px 0 6px;
+            font-size: 18px;
+            line-height: 1.25;
+        }
+        .maint-sub {
+            font-size: 12px;
+            color: #b7c8cb;
+            line-height: 1.45;
+            margin: 0 0 14px;
+        }
+        .maint-steps {
+            display: grid;
+            gap: 8px;
+        }
+        .maint-step {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 8px 10px;
+            border-radius: 7px;
+            font-size: 12px;
+            color: #9db0b5;
+            background: rgba(255, 255, 255, .03);
+            border: 1px solid transparent;
+        }
+        .maint-step.active {
+            color: #fff6df;
+            background: rgba(214, 143, 75, .2);
+            border-color: rgba(255, 210, 122, .55);
+            font-weight: 700;
+        }
+        .maint-step.done {
+            color: #9fe7c2;
+            background: rgba(52, 133, 94, .18);
+            border-color: rgba(119, 195, 162, .35);
+        }
+        .maint-num {
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 5px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, .08);
+        }
+        .maint-stage {
+            position: relative;
+            height: 100%;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+        }
+        .maint-rig {
+            width: min(620px, 100%);
+            transition: transform .35s ease;
+        }
+        .maint-rig.focused {
+            transform: scale(1.06);
+        }
+        .maint-hotspot {
+            cursor: pointer;
+        }
+        .maint-hotspot.is-target .hs-ring {
+            stroke: #ffd27a;
+            stroke-width: 3;
+            fill: rgba(255, 210, 122, .16);
+            animation: maintPulse 1.4s ease-in-out infinite;
+        }
+        @keyframes maintPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .45; }
+        }
+        .maint-hands {
+            position: absolute;
+            bottom: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(560px, 95%);
+            pointer-events: none;
+            transition: transform .22s ease;
+        }
+        .maint-hands.acting {
+            transform: translateX(-50%) translateY(-28px) rotate(-3deg);
+        }
+        .maint-right {
+            display: grid;
+            gap: 14px;
+            align-self: stretch;
+            align-content: space-between;
+        }
+        .maint-pct {
+            font-size: 28px;
+            font-weight: 800;
+            color: #ffd27a;
+            margin: 4px 0 8px;
+        }
+        .maint-bar {
+            height: 6px;
+            border-radius: 99px;
+            background: rgba(255, 255, 255, .1);
+            overflow: hidden;
+            margin: 10px 0 8px;
+        }
+        .maint-bar > i {
+            display: block;
+            height: 100%;
+            background: linear-gradient(90deg, #e59b40, #7de6c1);
+            transition: width .3s ease;
+        }
+        .maint-bot {
+            background: linear-gradient(115deg, rgba(10, 34, 43, .92), rgba(14, 25, 32, .86));
+            border: 1px solid rgba(104, 213, 234, .58);
+            border-radius: 12px;
+            padding: 13px;
+            display: flex;
+            gap: 11px;
+            align-items: center;
+        }
+        .maint-bot-face {
+            width: 48px;
+            height: 38px;
+            flex: none;
+            border-radius: 12px;
+            background: #102a33;
+            border: 3px solid #6f848e;
+            display: flex;
+            align-items: center;
+            justify-content: space-evenly;
+        }
+        .maint-bot-face i {
+            width: 6px;
+            height: 12px;
+            border-radius: 99px;
+            background: #9defff;
+            box-shadow: 0 0 8px #81e4ff;
+        }
+        .maint-foot {
+            position: relative;
+            z-index: 3;
+            pointer-events: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .maint-actions {
+            pointer-events: auto;
+            display: flex;
+            gap: 9px;
+            flex-wrap: wrap;
+        }
+        .maint-btn {
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-size: 12px;
+            font-weight: 800;
+            border: 1px solid rgba(138, 219, 229, .35);
+            background: rgba(18, 30, 36, .88);
+            color: #ebf4f6;
+        }
+        .maint-btn.primary {
+            background: linear-gradient(125deg, #e09a4b, #b6682e);
+            border-color: #ffd89d;
+            color: #fff8eb;
+        }
+        @media(max-width:960px) {
+            .maint-main { grid-template-columns: 1fr; overflow: auto; }
+            .maint-hands { display: none; }
+        }
+        .alert.urgent {
+            border-color: #ff9c6e;
+            background: linear-gradient(105deg, rgba(152, 43, 25, .94), rgba(89, 27, 25, .9));
+            box-shadow: 0 0 28px rgba(255, 118, 70, .42);
+            animation: alertPulse 1.15s ease-in-out infinite alternate;
+        }
+        @keyframes alertPulse {
+            from { box-shadow: 0 0 18px rgba(255, 118, 70, .28); }
+            to { box-shadow: 0 0 34px rgba(255, 148, 86, .58); }
+        }
+        .alert-timer {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 2px 7px;
+            border-radius: 999px;
+            background: rgba(255, 214, 120, .22);
+            border: 1px solid rgba(255, 214, 120, .65);
+            color: #ffe39b;
+            font-size: 11px;
+            font-weight: 850;
+            letter-spacing: .04em;
+        }
+        .event-fx {
+            position: fixed;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity .55s ease;
+        }
+        .event-fx.active {
+            opacity: 1;
+            animation: stormFlash 2.2s ease-in-out infinite alternate;
+        }
+        .event-fx.solar {
+            background: radial-gradient(circle at 75% 22%, rgba(255, 150, 62, .24), transparent 55%), linear-gradient(180deg, rgba(165, 58, 22, .16), rgba(45, 18, 12, .22));
+        }
+        .event-fx.dust {
+            background: radial-gradient(circle at 30% 60%, rgba(196, 121, 63, .30), transparent 65%), linear-gradient(180deg, rgba(110, 68, 38, .22), rgba(56, 34, 20, .30));
+        }
+        .event-fx.meteor {
+            background: radial-gradient(circle at 50% 25%, rgba(255, 96, 78, .22), transparent 60%), linear-gradient(180deg, rgba(72, 20, 26, .18), rgba(20, 12, 18, .24));
+        }
+        .event-fx.thermal {
+            background: radial-gradient(circle at 50% 50%, transparent 40%, rgba(92, 184, 232, .22) 100%);
+        }
+        @keyframes stormFlash {
+            from { filter: brightness(.95); }
+            to { filter: brightness(1.12); }
+        }
+        .lang-pill {
+            display: inline-flex;
+            gap: 4px;
+            padding: 3px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 226, 186, .35);
+            background: rgba(14, 20, 26, .78);
+            backdrop-filter: blur(8px);
+            pointer-events: auto;
+        }
+        .lang-pill button {
+            border: 0;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 800;
+            background: transparent;
+            color: #d6dde0;
+        }
+        .lang-pill button.active {
+            background: #ffd27a;
+            color: #16181c;
+        }
+        .chapter-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 0 0 22px;
+        }
+        .chapter-pill {
+            border: 1px solid rgba(138, 219, 229, .38);
+            background: rgba(12, 26, 33, .72);
+            color: #d6eef2;
+            border-radius: 999px;
+            padding: 7px 13px;
+            font-size: 11px;
+            font-weight: 750;
+        }
+        .chapter-pill.active {
+            border-color: #ffd27a;
+            background: rgba(110, 55, 28, .85);
+            color: #fff6e0;
+            box-shadow: 0 0 16px rgba(255, 171, 74, .45);
+        }
     </style>
 </head>
 
 <body>
-<div id="world"><canvas id="scene" aria-label="Mundo tridimensional interactivo de Aurora-1 en Marte"></canvas></div>
+<div id="world"><canvas id="scene" aria-label="Mundo tridimensional interactivo de Aurora-1 en Marte"></canvas><div id="eventFx" class="event-fx" aria-hidden="true"></div></div>
 <section class="menu" id="menu" aria-label="Menú de inicio de HORIZONTE">
  <div class="menu-content">
-  <div class="overline">Una misión de entrenamiento espacial · Demo web 3D</div>
-  <h1 class="brand">HORIZONTE</h1><div class="brandline"></div><p class="tagline">COLONIA AURORA—1</p>
-  <div class="chapter-label">CAPÍTULO 01 · MARTE</div>
-  <p class="lead">El futuro de la colonia depende de tus decisiones.</p>
-  <p class="summary">Un fallo amenaza el suministro eléctrico de Aurora-1. Explora la base, examina sus sistemas y restablece la energía antes de que los recursos se agoten.</p>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+   <div class="overline" id="menuOverline">Una misión de entrenamiento espacial · Demo web 3D</div>
+   <div class="lang-pill" id="menuLang" aria-label="Idioma / Language"><button type="button" data-lang="es" class="active">ES</button><button type="button" data-lang="en">EN</button></div>
+  </div>
+  <h1 class="brand">HORIZONTE</h1><div class="brandline"></div><p class="tagline" id="menuTagline">COLONIA AURORA—1</p>
+  <div class="chapter-label" id="menuChapter">CAPÍTULO 01 · MARTE</div>
+  <p class="lead" id="menuLead">El futuro de la colonia depende de tus decisiones.</p>
+  <p class="summary" id="menuSummary">Un fallo amenaza el suministro eléctrico de Aurora-1. Explora la base, examina sus sistemas y restablece la energía antes de que los recursos se agoten.</p>
+  <div class="chapter-pills" id="menuChapters" aria-label="Modo de juego / Soles">
+   <button type="button" class="chapter-pill active" data-chapter="tutorial">Soles 1–3: Tutorial</button>
+   <button type="button" class="chapter-pill" data-chapter="survival">Soles 4–9: Supervivencia y pistas</button>
+   <button type="button" class="chapter-pill" data-chapter="final">Sol 10: Misión final</button>
+  </div>
   <div class="menu-actions"><button class="mainbtn" id="start">▶ &nbsp; COMENZAR DEMO</button><button class="ghostbtn" id="instructions">CONTROLES E HISTORIA</button></div>
   <div class="menu-footer"><span>3D real en navegador</span><span>Sin instalación</span><span>Misión científica simulada</span></div>
  </div>
@@ -2172,18 +2623,21 @@
 <div id="gameUI" class="game-ui hidden" aria-label="Interfaz del videojuego">
  <div id="skyLabels" aria-label="Cuerpos celestes y naves visibles"></div><div class="sky-note" id="skyNote">Planetas: representación visual · Platillos y marcianos: ficción</div>
  <div class="topbar">
-  <div class="mini-brand"><strong>HORIZONTE</strong><span>COLONIA AURORA—1</span></div>
+  <div class="mini-brand"><strong>HORIZONTE</strong><span id="hudTagline">COLONIA AURORA—1</span></div>
   <div class="vitals" aria-label="Recursos de la base">
-   <div class="vital"><span class="symbol" style="color:#ffd077">ϟ</span><span><span class="vl">Energía</span><br><b class="num" id="energy">62 %</b></span></div>
-   <div class="vital"><span class="symbol">💧</span><span><span class="vl">Oxígeno</span><br><b class="num" id="oxygen">78 %</b></span></div>
-   <div class="vital"><span class="symbol">🌿</span><span><span class="vl">Alimentos</span><br><b class="num" id="food">54 %</b></span></div>
-   <div class="vital"><span class="symbol">⬡</span><span><span class="vl">Blindaje</span><br><b class="num" id="shield">68 %</b></span></div>
-   <div class="vital" id="healthVital"><span class="symbol" style="color:#ff7b8a">❤</span><span><span class="vl">Vida</span><br><b class="num" id="health">100 %</b></span></div>
+   <div class="vital"><span class="symbol" style="color:#ffd077">ϟ</span><span><span class="vl" id="lblEnergy">Energía</span><br><b class="num" id="energy">62 %</b></span></div>
+   <div class="vital"><span class="symbol">💧</span><span><span class="vl" id="lblOxygen">Oxígeno</span><br><b class="num" id="oxygen">78 %</b></span></div>
+   <div class="vital"><span class="symbol">🌿</span><span><span class="vl" id="lblFood">Alimentos</span><br><b class="num" id="food">54 %</b></span></div>
+   <div class="vital"><span class="symbol">⬡</span><span><span class="vl" id="lblShield">Blindaje</span><br><b class="num" id="shield">68 %</b></span></div>
+   <div class="vital" id="healthVital"><span class="symbol" style="color:#ff7b8a">❤</span><span><span class="vl" id="lblHealth">Vida</span><br><b class="num" id="health">100 %</b></span></div>
   </div>
-  <div class="mission-day"><b>Sol 12</b><small>Misión: Marte</small><small id="modeBadge" class="mode-badge">Explorador · 7–9</small></div>
+  <div style="display:flex;align-items:center;gap:8px">
+   <div class="lang-pill" id="hudLang" aria-label="Idioma / Language"><button type="button" data-lang="es" class="active">ES</button><button type="button" data-lang="en">EN</button></div>
+   <button type="button" class="mission-day" id="solBtn" title="Cambiar modo de Soles" style="cursor:pointer;color:inherit"><b id="solNum">Sol 1</b><small id="solPhaseLabel">Tutorial</small><small id="modeBadge" class="mode-badge">Explorador · 7–9</small></button>
+  </div>
  </div>
- <div class="mission-card" id="missionCard"><div class="mission-heading"><div class="label">◉ &nbsp; MISIÓN ACTUAL</div><div class="mission-heading-actions"><span class="coin-pill" title="Monedas ganadas completando misiones"><svg aria-hidden="true" viewBox="0 0 16 16" width="13" height="13" style="flex:none"><circle cx="8" cy="8" r="7" fill="#f5c451" stroke="#b87d1e" stroke-width="1.3"/><circle cx="8" cy="8" r="4.3" fill="none" stroke="#fff1b8" stroke-width="1"/></svg><b id="coinCount">0</b><small id="coinPct" class="coin-pct">(0%)</small></span><button type="button" id="missionToggle" class="mission-toggle" aria-label="Ocultar misión" aria-controls="missionDetails" aria-expanded="true" title="Ocultar misión"><svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4 4-4"/></svg></button></div></div><div id="missionDetails"><h2>Restablece el suministro<br>de energía de la base.</h2><div id="checks" class="checks" aria-live="polite"></div><div class="mission-foot"><button id="guide" class="smallbtn">⌖ &nbsp; IR AL OBJETIVO</button><button id="view" class="smallbtn">◎ &nbsp; CÁMARA</button><button id="wardrobe" class="smallbtn">◈ &nbsp; ARMARIO · APARIENCIAS</button><button id="foodShop" class="smallbtn">🍽️ &nbsp; SUMINISTROS · COMIDA</button><button id="backpackBtn" class="smallbtn" style="grid-column:1/-1;background:#3a3529b8;border-color:#c9b88a;color:#fff6d8">🎒 &nbsp; MOCHILA · M / CTRL+R</button></div></div></div>
- <button class="alert" id="alert" title="Alternar la simulación de tormenta solar"><span class="alerticon">☀</span><span><strong>Alerta de clima espacial</strong><small id="alertLabel">Actividad solar elevada (simulación)</small></span><span class="arrow">›</span></button>
+ <div class="mission-card" id="missionCard"><div class="mission-heading"><div class="label" id="lblMissionCurrent">◉ &nbsp; MISIÓN ACTUAL</div><div class="mission-heading-actions"><span class="coin-pill" title="Monedas ganadas completando misiones"><svg aria-hidden="true" viewBox="0 0 16 16" width="13" height="13" style="flex:none"><circle cx="8" cy="8" r="7" fill="#f5c451" stroke="#b87d1e" stroke-width="1.3"/><circle cx="8" cy="8" r="4.3" fill="none" stroke="#fff1b8" stroke-width="1"/></svg><b id="coinCount">0</b><small id="coinPct" class="coin-pct">(0%)</small></span><button type="button" id="missionToggle" class="mission-toggle" aria-label="Ocultar misión" aria-controls="missionDetails" aria-expanded="true" title="Ocultar misión"><svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6l4 4 4-4"/></svg></button></div></div><div id="missionDetails"><h2 id="missionTitle">Restablece el suministro<br>de energía de la base.</h2><div id="checks" class="checks" aria-live="polite"></div><div class="mission-foot"><button id="guide" class="smallbtn">⌖ &nbsp; IR AL OBJETIVO</button><button id="view" class="smallbtn">◎ &nbsp; CÁMARA</button><button id="wardrobe" class="smallbtn">◈ &nbsp; ARMARIO · APARIENCIAS</button><button id="foodShop" class="smallbtn">🍽️ &nbsp; SUMINISTROS · COMIDA</button><button id="backpackBtn" class="smallbtn" style="grid-column:1/-1;background:#3a3529b8;border-color:#c9b88a;color:#fff6d8">🎒 &nbsp; MOCHILA · M / CTRL+R</button></div></div></div>
+ <button class="alert" id="alert" title="Ver o responder a la alerta de clima espacial"><span class="alerticon" id="alertIcon">☀</span><span><strong id="alertTitle">Alerta de clima espacial</strong><span class="alert-timer hidden" id="alertTimer">30s</span><small id="alertLabel">Actividad solar elevada (simulación)</small></span><span class="arrow">›</span></button>
  <div class="waypoint" id="waypoint"><div class="diamond"><span>!</span></div><strong id="waypointTitle">Paneles solares</strong><small id="distance">25 m</small></div>
  <div class="interior-hud hidden" id="interiorHud"><strong id="interiorName">Módulo</strong><span id="interiorHint">Explora el interior</span></div>
  <div class="interior-reticle" aria-hidden="true"></div>
@@ -2196,7 +2650,63 @@
  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </div>
 <div class="shade hidden" id="modalShade"><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="dlglabel" id="modalTag">CENTRO DE CONTROL</div><h2 id="modalTitle">Misión</h2><div id="modalBody"></div><div class="dlgbuttons" id="modalButtons"></div></div></div>
-<script src="engine.js"></script><script src="game.js"></script>
+<section class="maint hidden" id="maintOverlay" aria-label="Consola de mantenimiento en primera persona">
+ <canvas id="maintGl" aria-label="Escena tridimensional de mantenimiento espacial"></canvas>
+ <div class="maint-film"></div>
+ <div class="maint-scan"></div>
+ <button type="button" class="maint-target" id="maintTarget" aria-label="Interactuar con la pieza indicada"><span class="ring"></span><small id="maintTargetText">AISLADOR PRINCIPAL</small></button>
+ <header class="maint-top">
+  <div class="maint-brand"><strong>HORIZONTE</strong><span>COLONIA AURORA-1 · INGENIERÍA</span></div>
+  <div class="maint-pills">
+   <div class="maint-pill"><small>⚡ ENERGÍA</small><b id="maintEnergy">62%</b></div>
+   <div class="maint-pill"><small>◈ ESTADO</small><b id="maintStatus">CIRCUITO ACTIVO</b></div>
+   <div class="maint-pill"><small>◎ CÁMARA</small><b>1ª PERSONA</b></div>
+   <div class="maint-pill sol"><small>SOL 12</small><b>BASE MARCIANA</b></div>
+  </div>
+ </header>
+ <div class="maint-main">
+  <aside class="maint-card">
+   <div class="label">◉ &nbsp; MISIÓN DE MANTENIMIENTO</div>
+   <h3 id="maintTitle">Recuperar la energía de Aurora-1</h3>
+   <p class="maint-sub" id="maintSub">Panel eléctrico SA-04. Aísla el sistema, localiza la avería y comprueba la reparación.</p>
+   <div class="maint-steps" id="maintSteps"></div>
+   <p style="font-size:10px;color:#82979d;margin:14px 0 0;line-height:1.4">Simulación educativa: los procedimientos no son instrucciones para instalaciones eléctricas reales.</p>
+  </aside>
+  <aside class="maint-right">
+   <div class="maint-card">
+    <div class="label" style="color:#9ec0c7">ESTADO DEL SISTEMA</div>
+    <div class="maint-pct" id="maintPct">62 %</div>
+    <p class="maint-sub" id="maintDiag" style="margin-bottom:6px">Producción disminuida. Anomalía detectada en la celda F2.</p>
+    <div class="maint-bar"><i id="maintBar" style="width:62%"></i></div>
+    <div style="font-size:10px;letter-spacing:.12em;color:#93aeb5">DIAGNÓSTICO · UNIDAD SA-04</div>
+   </div>
+   <div class="maint-bot">
+    <div class="maint-bot-face" aria-hidden="true"><i></i><i></i></div>
+    <div>
+     <div style="font-size:11px;font-weight:800;color:#9defff;letter-spacing:.08em">ASTROBOT / SOPORTE</div>
+     <p id="maintBot" style="margin:4px 0 0;font-size:12px;color:#e6eeed;line-height:1.45">Localiza el interruptor amarillo del aislamiento. Es una práctica educativa.</p>
+    </div>
+   </div>
+  </aside>
+ </div>
+ <section class="maint-interactions" id="maintInteractions" aria-label="Controles de la operación">
+  <div class="maint-int-name" id="maintIntTitle">AISLADOR PRINCIPAL</div>
+  <p class="maint-int-sub" id="maintIntDesc">Selecciona el control físico resaltado o usa el botón de acción.</p>
+  <div class="maint-int-row" id="maintSpecific"></div>
+ </section>
+ <footer class="maint-foot">
+  <div style="font-size:11px;color:#c2d0d3;display:flex;gap:12px;flex-wrap:wrap">
+   <span><b>ARRASTRAR</b> Mirar</span><span><b>CLIC</b> Manipular</span><span><b>E</b> Acción</span><span><b>Esc</b> Salir</span>
+  </div>
+  <div class="maint-actions">
+   <button type="button" class="maint-btn" id="maintFocus">◎ &nbsp; ENFOCAR EQUIPO</button>
+   <button type="button" class="maint-btn" id="maintHint">+ &nbsp; PISTA</button>
+   <button type="button" class="maint-btn primary" id="maintAction">E · INTERACTUAR</button>
+   <button type="button" class="maint-btn" id="maintClose">SALIR · ESC</button>
+  </div>
+ </footer>
+</section>
+<script src="engine.js"></script><script src="maint3d.js"></script><script src="game.js"></script>
 </body>
 
 </html>
