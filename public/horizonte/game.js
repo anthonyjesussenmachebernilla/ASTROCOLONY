@@ -396,6 +396,25 @@ function closeMaintenance(){
  $('maintOverlay')?.classList.add('hidden');
  engine?.pause(false);paused=false;
 }
+let tallerActive=false;
+function openTaller(stationId){
+ const overlay=$('tallerOverlay'),frame=$('tallerFrame');
+ if(!overlay||!frame)return false;
+ tallerActive=true;
+ frame.src=`taller.html?embed=1&task=${encodeURIComponent(stationId)}`;
+ overlay.classList.remove('hidden');
+ engine?.pause(true);paused=true;
+ frame.focus?.();
+ return true;
+}
+function closeTaller(){
+ if(!tallerActive)return;
+ tallerActive=false;
+ $('tallerOverlay')?.classList.add('hidden');
+ const frame=$('tallerFrame');
+ if(frame)frame.src='about:blank';
+ engine?.pause(false);paused=false;
+}
 function contextualMaintAction(){
  if(!maintStation)return;
  if(maintStep===2&&maintStation==='solar'){maintClean(25);return}
@@ -497,6 +516,7 @@ function interact(nearest){if(maintStation){contextualMaintAction();return}if(ne
   actions.push({label:'SEGUIR EXPLORANDO',secondary:true,action:hideModal});
   showModal('HALLAZGO EN EL MÓDULO',target.name,`<p>${target.detail}</p><p>${recorded?'Ya registraste este hallazgo. Puedes volver a consultarlo.':'Registra lo que observaste para ayudar a la colonia.'}</p>`,actions);return;
  }
+ if(nearest.target.id==='console'&&station.id==='solar'&&/^https?:$/.test(window.location?.protocol||'')&&openTaller('solar'))return;
  if(campaign.finished){showEnding();return}if(station.id!==day().station){toast('Puedes explorar este módulo. El objetivo de hoy está marcado en el exterior.');return}if(nearest.target.id==='maintenance'&&(station.id==='solar'||station.id==='regulator')&&campaign.sol<=2){openMaintenance(station.id);return}openConsole();}
 function guide(){if(campaign.finished||campaign.completed)return;if(engine?.getState().interior){toast('Sal por la puerta del módulo para seguir el marcador del exterior.');return}engine?.goTo(day().station);toast(playerMode==='explorador'?'Mira el marcador dorado y camina con WASD hasta el equipo.':'Modo Comandante: sigue el marcador dorado y usa WASD para llegar al objetivo.')}
 function openDiscovery(onBack=hideModal,stationId=engine?.getState().interior){const location=window.MarsDiscovery?.locations[stationId];if(!location)return;window.MarsDiscovery.open({showModal,onBack,mode:playerMode,topic:location.topic,backLabel:onBack===hideModal?'Volver a explorar':'Volver al hallazgo'})}
@@ -514,7 +534,7 @@ function hudRects(includeWaypoint=false){const selectors=['.topbar','.mission-ca
 function overlaps(a,b,pad=10){return a.left<b.right+pad&&a.right>b.left-pad&&a.top<b.bottom+pad&&a.bottom>b.top-pad}
 function markerFits(x,y,width,height,placed=[],includeWaypoint=false){const rect={left:x-width/2,right:x+width/2,top:y-height,bottom:y};return x>width/2+12&&x<canvas.clientWidth-width/2-12&&y>height+10&&y<canvas.clientHeight-20&&!hudRects(includeWaypoint).some(ui=>overlaps(rect,ui))&&!placed.some(other=>overlaps(rect,other,5))?rect:null}
 function updateSky(markers){const layer=$('skyLabels');layer.classList.toggle('hidden',!markers.length);$('skyNote').classList.toggle('hidden',!markers.length);while(layer.children.length<markers.length){const el=document.createElement('span');el.className='sky-label';layer.appendChild(el)}const placed=[];for(let i=0;i<layer.children.length;i++){const el=layer.children[i],p=markers[i];el.style.display='none';if(!p?.inView)continue;const rect=markerFits(p.x,p.y,Math.max(42,p.name.length*7+16),25,placed,true);if(!rect)continue;placed.push(rect);el.textContent=p.name;el.classList.toggle('fiction',p.name.startsWith('Platillo'));el.style.left=p.x+'px';el.style.top=p.y+'px';el.style.display='block'}}
-function updateTick(d){lastTick=d;const now=performance.now();if(d.moving){if(lastMoveHealthAt){const elapsed=Math.min(now-lastMoveHealthAt,5000);loseHealth(elapsed/180000,10)}lastMoveHealthAt=now}else lastMoveHealthAt=0;saveGame();updateDiscoveryMarker(d);const wp=$('waypoint'),hud=$('interiorHud');if(d.interior){updateSky([]);wp.style.display='none';$('interiorHint').textContent=d.nearest.dist<2.5?`E · ${d.nearest.target.name}`:`Acércate a ${d.nearest.target.name}`;$('botStatus').textContent='● EXPLORANDO EL INTERIOR';$('fps').textContent=d.fps+' FPS';return}const robot=d.nearest.robot;const near=d.nearest.station&&d.nearest.dist<5.7;hud.classList.toggle('hidden',!robot&&!near);if(robot){const guide=robotGuides[robot.id];$('interiorName').textContent=guide.name+' / ROBOT';$('interiorHint').textContent='\u00a1Hola! Pulsa E para conversar';$('mobileInteract').textContent='E \u00b7 HABLAR'}else{$('mobileInteract').textContent='E \u00b7 ENTRAR / USAR'}if(!robot&&near){$('interiorName').textContent=d.nearest.station.name;$('interiorHint').textContent=window.MarsDiscovery.locations[d.nearest.station.id]?'E · Entrar · ⓘ Foto NASA dentro':'E · Entrar al módulo'}const needed=window.MarsGfx.stations.find(station=>station.id===day().station);if(!needed){wp.style.display="none";return}const p=d.markers[needed.id];const dist=Math.hypot(needed.x-d.pos[0],needed.z-d.pos[2]);if(campaign.finished||campaign.completed||!p||!p.inView||!markerFits(p.x,p.y,145,90)){wp.style.display='none'}else{wp.style.display='flex';wp.style.left=p.x+'px';wp.style.top=p.y+'px';$('waypointTitle').textContent=needed.name;$('distance').textContent=dist<5.8?'Presiona E para entrar':`${Math.round(dist)} m`;}updateSky(d.skyMarkers||[]);if(robot){$('botStatus').textContent='ROBOT CERCANO / PULSA E'}else if(!campaign.finished&&!campaign.completed&&dist<5.8&&d.nearest.station?.id===needed.id&&Math.round(performance.now()/1100)%2===0){$('botStatus').textContent='● ENTRADA ALCANZADA · PULSA E'}else $('botStatus').textContent='● CANAL DE ASISTENCIA ACTIVO';$('fps').textContent=d.fps+' FPS';}
+function updateTick(d){lastTick=d;const now=performance.now();if(d.moving){if(lastMoveHealthAt){const elapsed=Math.min(now-lastMoveHealthAt,5000);loseHealth(elapsed/180000,10)}lastMoveHealthAt=now}else lastMoveHealthAt=0;saveGame();updateDiscoveryMarker(d);const wp=$('waypoint'),hud=$('interiorHud');if(d.interior){updateSky([]);wp.style.display='none';const nearSolarConsole=d.interior==='solar'&&d.nearest.target.id==='console'&&d.nearest.dist<2.5;$('interiorHint').textContent=nearSolarConsole?'E · Taller de mantenimiento 3D':d.nearest.dist<2.5?`E · ${d.nearest.target.name}`:`Acércate a ${d.nearest.target.name}`;$('mobileInteract').textContent=nearSolarConsole?'E · TALLER 3D':'E · USAR / SALIR';$('botStatus').textContent='● EXPLORANDO EL INTERIOR';$('fps').textContent=d.fps+' FPS';return}const robot=d.nearest.robot;const near=d.nearest.station&&d.nearest.dist<5.7;hud.classList.toggle('hidden',!robot&&!near);if(robot){const guide=robotGuides[robot.id];$('interiorName').textContent=guide.name+' / ROBOT';$('interiorHint').textContent='\u00a1Hola! Pulsa E para conversar';$('mobileInteract').textContent='E \u00b7 HABLAR'}else{$('mobileInteract').textContent='E \u00b7 ENTRAR / USAR'}if(!robot&&near){$('interiorName').textContent=d.nearest.station.name;$('interiorHint').textContent=window.MarsDiscovery.locations[d.nearest.station.id]?'E · Entrar · ⓘ Foto NASA dentro':'E · Entrar al módulo'}const needed=window.MarsGfx.stations.find(station=>station.id===day().station);if(!needed){wp.style.display="none";return}const p=d.markers[needed.id];const dist=Math.hypot(needed.x-d.pos[0],needed.z-d.pos[2]);if(campaign.finished||campaign.completed||!p||!p.inView||!markerFits(p.x,p.y,145,90)){wp.style.display='none'}else{wp.style.display='flex';wp.style.left=p.x+'px';wp.style.top=p.y+'px';$('waypointTitle').textContent=needed.name;$('distance').textContent=dist<5.8?'Presiona E para entrar':`${Math.round(dist)} m`;}updateSky(d.skyMarkers||[]);if(robot){$('botStatus').textContent='ROBOT CERCANO / PULSA E'}else if(!campaign.finished&&!campaign.completed&&dist<5.8&&d.nearest.station?.id===needed.id&&Math.round(performance.now()/1100)%2===0){$('botStatus').textContent='● ENTRADA ALCANZADA · PULSA E'}else $('botStatus').textContent='● CANAL DE ASISTENCIA ACTIVO';$('fps').textContent=d.fps+' FPS';}
 function applyResourceDelta(delta){
  const parts=[];
  if(delta.energy){energy=Math.max(0,Math.min(100,energy+delta.energy));parts.push(`${delta.energy>0?'+':''}${delta.energy}% Energía`)}
@@ -619,7 +639,7 @@ function openEventDecision(){
 }
 function restart(){engine.leave();updateInterior();inspected.clear();cluesFound.clear();campaign=campaignApi.initial();step=0;currentSol=solChapter==='final'?10:solChapter==='survival'?4:1;energy=62;oxygen=78;food=54;shield=68;health=100;lowHealthWarned=false;lastMoveHealthAt=0;heldFood=null;clearTimeout(eatTimer);eatTimer=0;engine?.setHeldFood?.(null);clearTimeout(eventCountdownTimer);activeEvent=null;clearEventVisuals();stats();applyLanguage();message(day().hint);const s=engine.getState();s.pos=[0,0,19];s.yaw=0;s.avatarYaw=0;s.camera='third';s.jumpHeight=0;s.jumpVelocity=0;s.storm=0;s.stormTarget=0;saveGame(true);scheduleNextEvent(solChapter==='tutorial'?60000:solChapter==='survival'?35000:28000);toast(lang==='en'?'New mission started!':'¡Nueva misión iniciada!')}
 function toggleStorm(){openEventDecision();}
-function initialize(){if(!engine){try{engine=window.MarsGfx.createDemo(canvas,{onTick:updateTick,onInteract:interact,onEat:eatHeldFood,onEatDone:finishEating,onBackpack:backpackModal,onEscape:()=>{if(maintStation)closeMaintenance();else if(!shade.classList.contains('hidden'))hideModal();else pauseGame();},onPanel:missionPanel,onCamera:(v)=>toast(v==='first'?'Cámara en primera persona.':'Cámara en tercera persona.')});}catch(e){console.error(e);menu.classList.remove('hidden');showModal('ERROR GRÁFICO','No se pudo cargar el escenario',`<p>${e.message}</p><p>La demo necesita un navegador moderno con WebGL 2 habilitado.</p>`,[{label:'VOLVER AL MENÚ',action:hideModal},{label:'ABRIR AVENTURA COMPLETA',secondary:true,action:()=>window.parent.location.assign('/game/legacy')}]);$('start').disabled=false;$('start').textContent='▶ COMENZAR DEMO';return false}}
+function initialize(){if(!engine){try{engine=window.MarsGfx.createDemo(canvas,{onTick:updateTick,onInteract:interact,onEat:eatHeldFood,onEatDone:finishEating,onBackpack:backpackModal,onEscape:()=>{if(tallerActive)closeTaller();else if(maintStation)closeMaintenance();else if(!shade.classList.contains('hidden'))hideModal();else pauseGame();},onPanel:missionPanel,onCamera:(v)=>toast(v==='first'?'Cámara en primera persona.':'Cámara en tercera persona.')});}catch(e){console.error(e);menu.classList.remove('hidden');showModal('ERROR GRÁFICO','No se pudo cargar el escenario',`<p>${e.message}</p><p>La demo necesita un navegador moderno con WebGL 2 habilitado.</p>`,[{label:'VOLVER AL MENÚ',action:hideModal},{label:'ABRIR AVENTURA COMPLETA',secondary:true,action:()=>window.parent.location.assign('/game/legacy')}]);$('start').disabled=false;$('start').textContent='▶ COMENZAR DEMO';return false}}
  return true}
 function startGame(){const startBtn=$('start');startBtn.disabled=true;startBtn.textContent='PREPARANDO COLONIA…';setTimeout(()=>{if(!initialize())return;menu.classList.add('hidden');ui.classList.remove('hidden');started=true;engine.start();engine.pause(false);loadWardrobe();startBtn.textContent='▶ COMENZAR DEMO';startBtn.disabled=false;if(loadGame()){engine.setSkin?.(equipped);scheduleNextEvent(28000);toast(`Partida recuperada · Modo ${modeLabel()}.`)}else{updateMode();engine.setSkin?.(equipped);restart();toast(`Sol 12 · Modo ${modeLabel()}. Comienza la exploración.`)}},60)}
 $('start').addEventListener('click',startGame);$('instructions').addEventListener('click',instructional);$('pause').addEventListener('click',pauseGame);$('wardrobe').addEventListener('click',wardrobe);$('foodShop')?.addEventListener('click',foodStore);$('backpackBtn')?.addEventListener('click',backpackModal);$('guide').addEventListener('click',guide);$('view').addEventListener('click',()=>engine?.toggleCamera());$('alert').addEventListener('click',toggleStorm);$('mobileInteract').addEventListener('click',()=>interact(engine?.getNearest()));$('mobileCamera').addEventListener('click',()=>engine?.toggleCamera());
@@ -631,8 +651,23 @@ for(const btn of document.querySelectorAll('[data-lang]'))btn.addEventListener('
 for(const btn of document.querySelectorAll('[data-chapter]'))btn.addEventListener('click',()=>setSolChapter(btn.dataset.chapter,false));
 $('solBtn')?.addEventListener('click',openChapterModal);
 $('maintAction')?.addEventListener('click',contextualMaintAction);$('maintTarget')?.addEventListener('click',()=>{if(maintStation==='regulator'&&maintStep===2)maintChooseFuse(1);else contextualMaintAction()});$('maintClose')?.addEventListener('click',closeMaintenance);$('maintFocus')?.addEventListener('click',()=>window.HorizonteMaint3D?.toggleFocus());$('maintHint')?.addEventListener('click',()=>{if(maintStation)toast(MAINT_SPEC[maintStation].hints[Math.min(maintStep,4)])});
-window.addEventListener('keydown',e=>{if(maintStation&&!e.repeat){if(e.code==='KeyE'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();contextualMaintAction();return}if(e.code==='Escape'){e.preventDefault();closeMaintenance();return}}if(started&&((e.ctrlKey||e.metaKey)&&e.code==='KeyR'||e.code==='KeyM')){e.preventDefault();if(!e.repeat)backpackModal()}},true);
-window.addEventListener('message',e=>{if(started&&e.data?.type==='toggle-backpack')backpackModal()});
+window.addEventListener('keydown',e=>{if(tallerActive&&e.code==='Escape'&&!e.repeat){e.preventDefault();closeTaller();return}if(maintStation&&!e.repeat){if(e.code==='KeyE'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();contextualMaintAction();return}if(e.code==='Escape'){e.preventDefault();closeMaintenance();return}}if(started&&((e.ctrlKey||e.metaKey)&&e.code==='KeyR'||e.code==='KeyM')){e.preventDefault();if(!e.repeat)backpackModal()}},true);
+window.addEventListener('message',e=>{
+ if(started&&e.data?.type==='toggle-backpack')backpackModal();
+ if(tallerActive&&e.data?.type==='HORIZONTE_MAINTENANCE'&&(!e.origin||!window.location?.origin||e.origin===window.location.origin)){
+  closeTaller();
+  if(e.data.status==='complete'){
+   if(e.data.task==='solar'){
+    if(campaign.sol===1&&!campaign.completed){inspected.add('solar:array');resolveDay(day().choices[0].id);}
+    else toast('Mantenimiento del campo solar completado.');
+   }else if(e.data.task==='regulator'){
+    if(campaign.sol===2&&!campaign.completed)resolveDay(day().choices[0].id);
+    else toast('Reparación del regulador completada.');
+   }
+   applyLanguage();stats();saveGame(true);
+  }
+ }
+});
 $('endSol').addEventListener('click',reviewSol);$('discoveryMarker')?.addEventListener('click',()=>openDiscovery(hideModal,$('discoveryMarker').dataset.station));
 window.addEventListener('pagehide',()=>saveGame(true));document.addEventListener('visibilitychange',()=>{if(document.hidden)saveGame(true)});
 if(new URLSearchParams(window.location.search).has('autostart'))startGame();
