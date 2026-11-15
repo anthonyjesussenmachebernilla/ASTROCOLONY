@@ -28,6 +28,7 @@ function boot(values = new Map<string, string>()) {
     localStorage: { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => values.set(key, value) },
     fetch: () => new Promise(() => {}), setTimeout, clearTimeout, setInterval, URLSearchParams, console,
   };
+  runInNewContext(readFileSync('public/horizonte/discovery.js', 'utf8'), context);
   runInNewContext(readFileSync('public/horizonte/campaign.js', 'utf8'), context);
   runInNewContext(readFileSync('public/horizonte/game.js', 'utf8'), context);
   vi.advanceTimersByTime(65);

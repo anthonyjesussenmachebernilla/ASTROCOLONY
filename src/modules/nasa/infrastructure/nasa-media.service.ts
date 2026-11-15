@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { getServerEnv } from '@/lib/env';
-import { SOLAR_DUST_DISCOVERY } from '@/data/scientific-sources/mars-discoveries';
+import { NASA_DISCOVERIES, type DiscoveryTopic } from '@/data/scientific-sources/mars-discoveries';
 
 const ApodSchema = z.object({
   title: z.string(),
@@ -79,11 +79,11 @@ async function getJson(url: string): Promise<unknown> {
 }
 
 export class NasaMediaService {
-  /** A reviewed photograph for the solar-panel interaction; never a random search hit. */
-  getSolarDustDiscovery() {
-    return cached('discovery:solar-dust', async () => {
+  /** Each topic uses its own reviewed record and cache; never a random search hit. */
+  getDiscovery(topic: DiscoveryTopic) {
+    return cached(`discovery:${topic}`, async () => {
       try {
-        const entry = SOLAR_DUST_DISCOVERY;
+        const entry = NASA_DISCOVERIES[topic];
         const parsed = ImageLibrarySchema.safeParse(await getJson(
           `https://images-api.nasa.gov/search?nasa_id=${entry.nasaId}&media_type=image`,
         ));
@@ -91,10 +91,14 @@ export class NasaMediaService {
         const item = parsed.data.collection.items.find((item) => item.data[0].nasa_id === entry.nasaId);
         if (!item) return null;
         const meta = item.data[0];
-        const link = item.links?.find((link) => {
+        const links = item.links?.filter((link) => {
           const url = new URL(link.href);
           return link.render === 'image' && url.protocol === 'https:' && url.hostname === 'images-assets.nasa.gov';
         });
+        const link = links?.find((link) => /~medium\./.test(link.href))
+          ?? links?.find((link) => /~small\./.test(link.href))
+          ?? links?.find((link) => /~orig\./.test(link.href))
+          ?? links?.[0];
         if (!link || !meta.description?.trim()) return null;
         return {
           ...entry,
@@ -102,7 +106,7 @@ export class NasaMediaService {
           originalTitle: meta.title,
           originalDescription: meta.description,
           publishedAt: meta.date_created.slice(0, 10),
-          credit: meta.secondary_creator?.trim() || 'NASA/JPL-Caltech',
+          credit: entry.credit,
         };
       } catch {
         return null;

@@ -1,20 +1,24 @@
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { NASA_DISCOVERIES } from '@/data/scientific-sources/mars-discoveries';
+import { loadDiscoveryLocations } from '../helpers/horizon-discoveries';
 
 const discovery = {
-  nasaId: 'PIA25286', title: 'El polvo también llega a los paneles',
+  topic: 'solar-dust', nasaId: 'PIA25286', title: 'El polvo también llega a los paneles',
+  tag: 'Marte real', photoPlace: 'Fotografía en Marte', contextNote: 'Aurora-1 es una simulación.',
   imageUrl: 'https://images-assets.nasa.gov/image/PIA25286/PIA25286~small.jpg',
   alt: 'Panel de InSight cubierto de polvo en Marte.', credit: 'NASA/JPL-Caltech',
   explanation: 'InSight tomó esta foto en Marte.', missionConnection: 'El polvo reduce la energía.',
   more: 'Aurora-1 es una simulación.', originalDescription: '<b>NASA description</b>',
 };
 
-function boot(fetchPhoto: (url: string, options: unknown) => unknown) {
+function boot(fetchPhoto: (url: string, options: unknown) => unknown, station = 'solar') {
   const html = readFileSync('public/horizonte/index.html', 'utf8');
   document.body.innerHTML = html.slice(html.indexOf('<body>') + 6, html.indexOf('<script src="engine.js"'));
-  const state = { pos: [0, 0, 19], yaw: 0, camera: 'third', interior: 'solar', storm: 0, stormTarget: 0 };
-  const nearest = { inside: true, station: { id: 'solar' }, target: { id: 'array', name: 'Matriz de paneles', detail: 'El polvo reduce la luz.' }, dist: 1 };
+  const location = loadDiscoveryLocations()[station];
+  const state = { pos: [0, 0, 19], yaw: 0, camera: 'third', interior: station, storm: 0, stormTarget: 0 };
+  const nearest = { inside: true, station: { id: station }, target: { id: location.targetId, name: location.label, detail: 'Observa el equipo.' }, dist: 1 };
   const engine = { setStorm: vi.fn(), start: vi.fn(), pause: vi.fn(), leave: vi.fn(), getNearest: () => nearest, snapshot: () => ({}), getState: () => state };
   const storage = new Map<string, string>();
   const gameWindow = { location: { search: '?autostart=1' }, addEventListener: vi.fn(), MarsGfx: { stations: [{ id: 'solar' }], createDemo: () => engine }, MarsDiscovery: undefined };
@@ -38,6 +42,30 @@ beforeEach(() => vi.useFakeTimers());
 afterEach(() => { vi.clearAllTimers(); vi.useRealTimers(); document.body.innerHTML = ''; });
 
 describe('solar panel discovery in HORIZONTE', () => {
+  it.each(Object.entries(loadDiscoveryLocations()))('shows the correct real photograph, location and source in %s', async (station, location) => {
+    const entry = NASA_DISCOVERIES[location.topic as keyof typeof NASA_DISCOVERIES];
+    const data = { ...entry, imageUrl: `https://images-assets.nasa.gov/image/${entry.nasaId}/${entry.nasaId}~medium.jpg`, originalDescription: 'Original NASA metadata.' };
+    const request = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ discovery: data }) });
+    const { open } = boot(request, station);open();await flush();
+    const photo = document.querySelector<HTMLImageElement>('#marsDiscovery img')!;
+    expect(photo.src).toBe(data.imageUrl);photo.dispatchEvent(new Event('load'));
+    expect(document.querySelector('#marsDiscovery figcaption')).toHaveTextContent(entry.photoPlace);
+    expect(document.querySelector('#marsDiscovery figcaption')).toHaveTextContent(entry.credit);
+    expect(document.querySelector('#marsDiscovery a')).toHaveAttribute('href', entry.sourceUrl);
+    expect(document.querySelector('#marsDiscovery .mars-note')).toHaveTextContent(entry.contextNote);
+    expect(request.mock.calls[0][0]).toBe(`/api/nasa/discovery?topic=${location.topic}`);
+  });
+
+  it('retries the selected greenhouse topic and rejects a photograph from a different topic', async () => {
+    const request = vi.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValue({ ok: true, json: async () => ({ discovery }) });
+    const { open } = boot(request, 'greenhouse');open();await flush();
+    button('Intentar otra vez').click();await flush();
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(request.mock.calls.every(([url]) => url === '/api/nasa/discovery?topic=space-garden')).toBe(true);
+    expect(document.querySelector('#marsDiscovery img')).toBeNull();
+    expect(document.getElementById('marsDiscovery')).toHaveTextContent('La foto no pudo cargarse');
+  });
+
   it('shows one real photo and safe source text while paused, and returns without changing the resource reserves', async () => {
     const { engine, open } = boot(vi.fn().mockResolvedValue({ ok: true, json: async () => ({ discovery }) }));
     open();await flush();

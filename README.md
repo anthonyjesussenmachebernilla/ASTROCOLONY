@@ -33,20 +33,34 @@ La simulación anterior en `/game/legacy` conserva su funcionamiento independien
 ficción de la baliza y pruebas de la campaña. Los valores de recursos son modelos
 didácticos, no cálculos de supervivencia validados por NASA.
 
-## Fotografía interactiva
+## Fotografías interactivas
 
-Al acercarte a los paneles solares, el aviso de entrada indica que hay una foto
-dentro. En el módulo, pulsa **ⓘ Información con imagen**: la marca señala la
-matriz de paneles cuando está a la vista, o aparece debajo de la información del
-módulo. También puedes examinar la matriz con **E** y abrir la misma ficha.
-La fotografía puede consultarse de nuevo después de registrar el hallazgo.
-La misión permanece pausada y se puede salir con Escape o volver al hallazgo.
+Cada módulo tiene una ficha con **ⓘ Información con imagen**. La marca señala
+su equipo cuando está a la vista o aparece debajo del nombre del módulo. También
+puedes examinar el equipo con **E**. Solo se muestra un marcador a la vez y
+consultar fotos no altera las reservas ni es obligatorio para avanzar.
+
+| Módulo y equipo | Tema | Registro NASA | Lugar de la fotografía | Crédito |
+| --- | --- | --- | --- | --- |
+| Paneles solares · Matriz | Polvo en InSight | [PIA25286](https://images.nasa.gov/details/PIA25286) | Marte | NASA/JPL-Caltech |
+| Invernadero · Cultivos | Lechugas en Veggie | [iss055e000821](https://images.nasa.gov/details/iss055e000821) | Estación Espacial Internacional | NASA |
+| Hábitat · Soporte vital | Instrumento MOXIE | [PIA24203](https://images.nasa.gov/details/PIA24203) | Preparación antes del lanzamiento | NASA/JPL-Caltech |
+| Regulador · Refrigeración | Pruebas térmicas de Curiosity | [PIA13805](https://images.nasa.gov/details/PIA13805) | Pruebas en la Tierra | NASA/JPL-Caltech |
+| Centro de energía · Reserva | Generador de Curiosity | [KSC-2011-6694](https://images.nasa.gov/details/KSC-2011-6694) | Centro Espacial Kennedy, Tierra | NASA/Cory Huston |
+
+Las fichas distinguen fotos en Marte, cultivos en órbita y preparativos en la
+Tierra; no se presentan como fotografías de una colonia marciana existente.
+Cada registro se consulta por identificador con caché independiente. Si falla
+una foto, se puede reintentar ese mismo tema o continuar la misión. El texto
+en español es una adaptación educativa y la descripción original sigue visible
+en una sección desplegable.
 
 - Fotografía: **InSight's Dusty Solar Panel**, NASA Image Library `PIA25286`.
 - Fuente y crédito: [NASA/JPL-Caltech](https://images.nasa.gov/details/PIA25286).
 - Capturada el 24 de abril de 2022; la fecha de publicación del catálogo es distinta.
 - Consulta: `/api/nasa/discovery?topic=solar-dust`, usando la API pública
   `https://images-api.nasa.gov/search?nasa_id=PIA25286&media_type=image` (sin clave).
+- Otros temas: `space-garden`, `mars-oxygen`, `thermal-testing` y `rover-power`.
 - No usa APOD ni selecciona imágenes aleatorias. No modifica la foto ni incorpora
   imágenes generadas para sustituirla. Ante fallos de red, ofrece reintentar o continuar.
 - El texto en español es una adaptación educativa; la descripción original y el
