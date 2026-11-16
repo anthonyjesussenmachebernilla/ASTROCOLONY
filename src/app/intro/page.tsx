@@ -40,8 +40,8 @@ export default function IntroPage() {
   return <main className="relative isolate flex min-h-[640px] flex-1 flex-col overflow-hidden bg-[#211a17] text-white sm:min-h-[100dvh]">
     <div className="absolute inset-0 -z-20 bg-cover transition-[background-position] duration-700 motion-reduce:transition-none" style={{ backgroundImage: "url('/aurora-arrival.webp')", backgroundPosition: finished ? 'center center' : scene.imagePosition }} aria-hidden="true" />
     <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/80 via-black/10 to-black/50" aria-hidden="true" />
-    <header className="flex items-start justify-between gap-4 p-4 sm:p-7">
-      <div className="rounded-md border-l-2 border-amber-300 bg-black/45 px-4 py-2 backdrop-blur-sm"><p className="text-xs font-bold uppercase tracking-[0.3em] text-amber-200">AstroColony</p><p className="text-xs uppercase tracking-[0.2em] text-white/80">Colonia Aurora-1 · Marte</p><p className="mt-1 text-xs font-bold text-amber-200">Modo {mode === 'comandante' ? 'Comandante (10–12)' : 'Explorador (7–9)'}</p></div>
+    <header className="flex flex-wrap items-start justify-between gap-3 p-4 sm:flex-nowrap sm:gap-4 sm:p-7">
+      <div className="min-w-0 rounded-md border-l-2 border-amber-300 bg-black/45 px-4 py-2 backdrop-blur-sm"><p className="text-xs font-bold uppercase tracking-[0.3em] text-amber-200">AstroColony</p><p className="text-xs uppercase tracking-[0.2em] text-white/80">Colonia Aurora-1 · Marte</p><p className="mt-1 text-xs font-bold text-amber-200">Modo {mode === 'comandante' ? 'Comandante (10–12)' : 'Explorador (7–9)'}</p></div>
       <Link href="/game" className="inline-flex items-center gap-2 rounded-md bg-black/55 px-3 py-2 text-sm font-medium text-white/90 hover:bg-black/80"><SkipForward className="h-4 w-4" /> Saltar historia</Link>
     </header>
 
@@ -69,6 +69,6 @@ export default function IntroPage() {
       </section>}
     </div>
 
-    <footer className="flex items-center justify-between gap-3 bg-black/50 px-4 py-2 text-xs text-white/75 sm:px-7"><span>Historia de ficción · Ciencia inspirada en datos NASA</span><span>Interactúa con E o con los botones</span></footer>
+    <footer className="flex flex-wrap items-center justify-between gap-2 bg-black/50 px-4 py-2 text-xs text-white/75 sm:gap-3 sm:px-7"><span>Historia de ficción · Ciencia inspirada en datos NASA</span><span>Interactúa con E o con los botones</span></footer>
   </main>;
 }
