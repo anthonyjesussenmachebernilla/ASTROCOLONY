@@ -1,12 +1,11 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import HomePage from '@/app/page';
-import { GameAudioProvider } from '@/components/GameAudioProvider';
 import { ACTIVE_MISSION_STORAGE_KEY, useGameStore } from '@/stores/game.store';
 
 const push = vi.hoisted(() => vi.fn());
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }));
-const renderHome = () => render(<GameAudioProvider><HomePage /></GameAudioProvider>);
+const renderHome = () => render(<HomePage />);
 
 describe('menú principal', () => {
   beforeEach(() => {
@@ -60,21 +59,12 @@ describe('menú principal', () => {
     expect(screen.getByRole('checkbox', { name: /Reducir movimiento/i })).toBeChecked();
   });
 
-  it('muestra los atajos reales y conserva las preferencias de música', async () => {
-    const view = renderHome();
+  it('muestra los atajos reales sin opciones de música', () => {
+    renderHome();
     fireEvent.click(screen.getByRole('button', { name: /Configuración/i }));
     expect(screen.getByText('Entrar, usar o salir')).toBeInTheDocument();
     expect(screen.getByText('P / Tab')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('tab', { name: /Audio/i }));
-    fireEvent.click(screen.getByRole('checkbox', { name: /Activar música espacial/i }));
-    fireEvent.change(screen.getByRole('slider', { name: /Volumen de música/i }), { target: { value: '55' } });
-    expect(JSON.parse(localStorage.getItem('astrocolony_audio_settings_v1') || '{}')).toEqual({ enabled: true, volume: 55 });
-    view.unmount();
-    renderHome();
-    fireEvent.click(screen.getByRole('button', { name: /Configuración/i }));
-    fireEvent.click(screen.getByRole('tab', { name: /Audio/i }));
-    expect(screen.getByRole('checkbox', { name: /Activar música espacial/i })).toBeChecked();
-    expect(screen.getByRole('slider', { name: /Volumen de música/i })).toHaveValue('55');
+    expect(screen.queryByRole('tab', { name: /Audio/i })).not.toBeInTheDocument();
   });
 
   it('conserva el modo elegido en el menú', () => {
