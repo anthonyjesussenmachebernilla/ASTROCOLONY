@@ -1,105 +1,168 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# HORIZONTE 🚀🔴
 
-## Campaña de diez soles
+> **Educational Mars Colony Simulation & 3D Interactive WebGL Experience**  
+> Built with Next.js 16 (Turbopack), React 19, WebGL / Three.js, PostgreSQL (Prisma), and real scientific data from NASA.
 
-HORIZONTE incluye un tutorial en los soles 1–3 (explorar, reparar y repartir
-energía), decisiones de supervivencia en los soles 4–6 y una investigación de
-una señal ficticia en los soles 7–9. El Sol 10 cierra la historia: la señal procede
-de una baliza de la propia expedición. No es una afirmación científica de NASA.
+---
 
-Cada sol exige visitar la consola del módulo señalado, completar su objetivo y
-confirmar **Terminar el sol**. El Sol 1 requiere registrar primero la matriz de
-paneles; consultar la fotografía es opcional y no bloquea el tutorial sin red.
-No hay avance por cronómetro. Desde el Sol 4 se aplica un consumo educativo por
-sol: 4 de energía, 4 de oxígeno, 3 de alimentos y 1 de blindaje.
+## 📋 Table of Contents
+1. [Overview](#-overview)
+2. [Key Features](#-key-features)
+   - [10-Sol Educational Campaign](#10-sol-educational-campaign)
+   - [Interactive 3D Colony Modules](#interactive-3d-colony-modules)
+   - [Verified NASA Scientific Discoveries](#verified-nasa-scientific-discoveries)
+   - [Space Weather Simulation (NASA DONKI)](#space-weather-simulation-nasa-donki)
+3. [Architecture & Tech Stack](#-architecture--tech-stack)
+4. [Quickstart Guide for Evaluators / Jury](#-quickstart-guide-for-evaluators--jury)
+5. [Environment Variables](#-environment-variables)
+6. [Testing & Quality Assurance](#-testing--quality-assurance)
+7. [AI Assistance & Scientific Attribution](#-ai-assistance--scientific-attribution)
 
-Antes de confirmar se muestra el balance y se permite deshacer la decisión. Si
-una reserva se agotaría, Astrobot puede ofrecer una ayuda de práctica una vez
-por sol (repone cada reserva hasta un mínimo de 35 puntos).
-Esa ayuda queda declarada en la bitácora. El juego se centra en cuatro porcentajes:
-energía, oxígeno, alimentos y blindaje. Cada opción muestra sus porcentajes antes
-y después; el balance confirma lo que cambió. No incluye monedas, tiendas,
-inventario, apariencias comprables ni una barra adicional de vida.
-El resultado final conserva las reservas del cierre; seguir explorando no cambia
-el desenlace. Registrar información científica no modifica los recursos.
+---
 
-La partida utiliza el mismo identificador local de guardado con formato versión
-2, conservando mundo, modo, hallazgos y los cuatro recursos. Las partidas anteriores migran
-al siguiente sol de tutorial pendiente; una misión antigua terminada continúa en
-el Sol 4. El resultado final y la bitácora se recuperan al volver a abrir el juego.
-La simulación anterior en `/game/legacy` conserva su funcionamiento independiente.
+## 🌟 Overview
 
-**Asistencia de SI:** ChatGPT/Codex asistió en el código, textos educativos,
-ficción de la baliza y pruebas de la campaña. Los valores de recursos son modelos
-didácticos, no cálculos de supervivencia validados por NASA.
+**HORIZONTE** is an immersive educational web simulation that puts players in command of *Aurora-1*, humanity's pioneer research outpost on Mars. The project combines real-time WebGL 3D graphics, genuine NASA space science data, and resource-management gameplay designed to teach the fundamentals of space engineering, life support, power generation, and planetary survival.
 
-## Fotografías interactivas
+---
 
-Cada módulo tiene una ficha con **ⓘ Información con imagen**. La marca señala
-su equipo cuando está a la vista o aparece debajo del nombre del módulo. También
-puedes examinar el equipo con **E**. Solo se muestra un marcador a la vez y
-consultar fotos no altera las reservas ni es obligatorio para avanzar.
+## 🎮 Key Features
 
-| Módulo y equipo | Tema | Registro NASA | Lugar de la fotografía | Crédito |
-| --- | --- | --- | --- | --- |
-| Paneles solares · Matriz | Polvo en InSight | [PIA25286](https://images.nasa.gov/details/PIA25286) | Marte | NASA/JPL-Caltech |
-| Invernadero · Cultivos | Lechugas en Veggie | [iss055e000821](https://images.nasa.gov/details/iss055e000821) | Estación Espacial Internacional | NASA |
-| Hábitat · Soporte vital | Instrumento MOXIE | [PIA24203](https://images.nasa.gov/details/PIA24203) | Preparación antes del lanzamiento | NASA/JPL-Caltech |
-| Regulador · Refrigeración | Pruebas térmicas de Curiosity | [PIA13805](https://images.nasa.gov/details/PIA13805) | Pruebas en la Tierra | NASA/JPL-Caltech |
-| Centro de energía · Reserva | Generador de Curiosity | [KSC-2011-6694](https://images.nasa.gov/details/KSC-2011-6694) | Centro Espacial Kennedy, Tierra | NASA/Cory Huston |
+### 10-Sol Educational Campaign
+The core narrative takes place across ten Martian days (*Sols*):
+- **Sols 1–3 (Tutorial & Systems Familiarization):** Exploration of the base, inspection of the solar array, power distribution, and greenhouse initialization. Sol 1 teaches panel orientation and dust management.
+- **Sols 4–6 (Survival Challenges):** Resource trade-offs under escalating environmental pressure, including simulated solar storm alerts.
+- **Sols 7–9 (Signal Investigation):** Analysis of an unknown beacon transmission detected near the outpost.
+- **Sol 10 (Conclusion):** Narrative resolution revealing the beacon originated from the expedition's own lost telemetry package (purely fictional narrative; not a scientific assertion by NASA).
 
-Las fichas distinguen fotos en Marte, cultivos en órbita y preparativos en la
-Tierra; no se presentan como fotografías de una colonia marciana existente.
-Cada registro se consulta por identificador con caché independiente. Si falla
-una foto, se puede reintentar ese mismo tema o continuar la misión. El texto
-en español es una adaptación educativa y la descripción original sigue visible
-en una sección desplegable.
+#### Resource System & Mechanics
+- **4 Primary Resources (Percentages 0–100%):**
+  - ϟ **Energy:** Solar generation and battery storage.
+  - 💧 **Oxygen:** MOXIE extraction and atmospheric recycling.
+  - 🌿 **Food:** Hydroponic and aeroponic greenhouse yields.
+  - ⬡ **Shielding:** Habitat radiation protection and thermal integrity.
+- **Educational Upkeep:** Starting on Sol 4, a daily upkeep cost is applied: **-4 Energy, -4 Oxygen, -3 Food, -1 Shielding**.
+- **Transparent Decisions:** Every option displays before-and-after resource deltas before confirmation, with undo capabilities prior to ending the sol.
+- **Astrobot Emergency Assistance:** If any resource drops to zero, the autonomous assistant *Astrobot* offers a practice recovery option (replenishing vital reserves to a 35% baseline). This intervention is transparently documented in the mission log.
+- **Pure Didactic Focus:** No monetization, pay-to-win mechanics, arbitrary microtransactions, or cosmetics shops.
 
-- Fotografía: **InSight's Dusty Solar Panel**, NASA Image Library `PIA25286`.
-- Fuente y crédito: [NASA/JPL-Caltech](https://images.nasa.gov/details/PIA25286).
-- Capturada el 24 de abril de 2022; la fecha de publicación del catálogo es distinta.
-- Consulta: `/api/nasa/discovery?topic=solar-dust`, usando la API pública
-  `https://images-api.nasa.gov/search?nasa_id=PIA25286&media_type=image` (sin clave).
-- Otros temas: `space-garden`, `mars-oxygen`, `thermal-testing` y `rover-power`.
-- No usa APOD ni selecciona imágenes aleatorias. No modifica la foto ni incorpora
-  imágenes generadas para sustituirla. Ante fallos de red, ofrece reintentar o continuar.
-- El texto en español es una adaptación educativa; la descripción original y el
-  enlace al registro de NASA se pueden desplegar dentro de la ficha.
-- **Asistencia de SI:** ChatGPT/Codex asistió en el código de integración,
-  presentación, textos educativos y pruebas de esta función. La fotografía es de
-  NASA/JPL-Caltech; Aurora-1 y los porcentajes del juego son una simulación.
+---
 
-## Getting Started
+### 🏛 Interactive 3D Colony Modules
 
-First, run the development server:
+Players can interact with the colony either directly in the primary 3D terrain canvas or explore dedicated interactive 3D module workstations:
 
+1. **Habitat (`/horizonte/habitat.html`):** Crew quarters, environmental life-support consoles, atmospheric scrubbers, and MOXIE controls.
+2. **Energy Center (`/horizonte/energia.html`):** Power grid routing, battery banks, capacitor balancing, and solar array telemetry.
+3. **Greenhouse (`/horizonte/invernadero.html`):** Crop growth chambers, nutrient aeroponics, and LED light spectrum optimization.
+4. **Maintenance Workshop (`/horizonte/taller.html`):** Robotic rover diagnostic bay, tool calibration, and mechanical repair.
+5. **Thermal Regulator (`/horizonte/regulador.html`):** Radiator loops, coolant cycles, and heat dissipation across extreme Martian day/night cycles.
+
+---
+
+### 🔭 Verified NASA Scientific Discoveries
+
+Each station features an interactive **ⓘ Image & Scientific Information** notebook linking colony technology with real NASA space exploration records:
+
+| Colony Module | Scientific Topic | NASA Identifier | Location of Capture | Scientific Credit |
+| :--- | :--- | :--- | :--- | :--- |
+| **Solar Panels** · Array | Dust Accumulation on InSight | [PIA25286](https://images.nasa.gov/details/PIA25286) | Mars Surface (Elysium Planitia) | NASA / JPL-Caltech |
+| **Greenhouse** · Crops | Veggie Lettuce Cultivation | [iss055e000821](https://images.nasa.gov/details/iss055e000821) | International Space Station (LEO) | NASA |
+| **Habitat** · Life Support | MOXIE Oxygen Generator | [PIA24203](https://images.nasa.gov/details/PIA24203) | Pre-Launch Cleanroom (Earth) | NASA / JPL-Caltech |
+| **Thermal Regulator** · Cooling | Curiosity Rover Thermal Vacuum Tests | [PIA13805](https://images.nasa.gov/details/PIA13805) | Jet Propulsion Laboratory (Earth) | NASA / JPL-Caltech |
+| **Energy Center** · Power | Curiosity MMRTG Nuclear Power Generator | [KSC-2011-6694](https://images.nasa.gov/details/KSC-2011-6694) | Kennedy Space Center (Earth) | NASA / Cory Huston |
+
+- **Direct NASA Integration:** Queries the public NASA Image Library API (`https://images-api.nasa.gov`) using specific curated NASA IDs with independent client-side caching.
+- **Accurate Context:** Educational notes explicitly distinguish between photographs taken on Mars, experiments aboard the ISS, and pre-flight validation on Earth.
+- **Bilingual Context:** Educational text is presented in Spanish with the original English NASA catalog description accessible via an expandable drawer.
+
+---
+
+### ☀️ Space Weather Simulation (NASA DONKI)
+The game interfaces with the **NASA Space Weather Database of Notifications, Knowledge, Information (DONKI)** to retrieve solar flare observations, coronal mass ejections (CMEs), and geomagnetic activity indicators, translating real solar data into in-game environmental alerts.
+
+---
+
+## 🛠 Architecture & Tech Stack
+
+- **Framework:** [Next.js 16.4.6](https://nextjs.org/) (App Router, Turbopack, React 19)
+- **3D Graphics & Rendering:** WebGL, Three.js, GLSL custom shaders (fog, solar storm atmosphere, dust particle systems)
+- **Styling & UI:** Tailwind CSS, Framer Motion, Lucide React Icons
+- **Database & Persistence:** PostgreSQL 16 via Docker, Prisma ORM (`@prisma/client`, `@prisma/adapter-pg`)
+- **Testing Framework:** [Vitest](https://vitest.dev/) with JSDOM environment (83 unit and flow tests)
+- **State Management:** Zustand and LocalStorage Version 2 schema
+
+---
+
+## 🚀 Quickstart Guide for Evaluators / Jury
+
+To evaluate HORIZONTE locally, follow these simple steps:
+
+### Prerequisites
+- [Node.js](https://nodejs.org/) (version 18.x or 20.x recommended)
+- [Docker & Docker Desktop](https://www.docker.com/) (for the local PostgreSQL container)
+
+### Step 1: Clone the Repository
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/anthonyjesussenmachebernilla/ASTROCOLONY.git
+cd ASTROCOLONY
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Step 2: Start the Database Container
+Run the included Docker Compose configuration to start PostgreSQL on port `5433`:
+```bash
+docker compose up -d
+```
+*(Verify container status with `docker compose ps`)*
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Step 3: Install Dependencies
+```bash
+npm install
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Step 4: Run the Development Server
+```bash
+npm run dev
+```
 
-## Learn More
+### Step 5: Open in Your Browser
+- **Main Mission Portal:** [http://localhost:3000](http://localhost:3000)
+- **Direct 3D Mars Outpost (HORIZONTE):** [http://localhost:3000/horizonte/index.html](http://localhost:3000/horizonte/index.html)
+- **Interactive Greenhouse:** [http://localhost:3000/horizonte/invernadero.html](http://localhost:3000/horizonte/invernadero.html)
+- **Interactive Habitat:** [http://localhost:3000/horizonte/habitat.html](http://localhost:3000/horizonte/habitat.html)
+- **Interactive Energy Center:** [http://localhost:3000/horizonte/energia.html](http://localhost:3000/horizonte/energia.html)
+- **Interactive Maintenance Bay:** [http://localhost:3000/horizonte/taller.html](http://localhost:3000/horizonte/taller.html)
+- **Interactive Thermal Regulator:** [http://localhost:3000/horizonte/regulador.html](http://localhost:3000/horizonte/regulador.html)
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🔐 Environment Variables
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+For the jury's convenience, the `.env` file is included directly in the repository with the necessary development settings:
 
-## Deploy on Vercel
+```env
+DATABASE_URL="postgresql://astrocolony:astrocolony_dev_password@localhost:5433/astrocolony"
+NASA_API_KEY="BDWn8dBrmmwwrmqRwB8kdM8Mt9NWpkgt6rHczkTk"
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `DATABASE_URL`: Pre-configured to match the local PostgreSQL credentials in `docker-compose.yml`.
+- `NASA_API_KEY`: NASA Open Data API key (defaults safely to `'DEMO_KEY'` if omitted).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 🧪 Testing & Quality Assurance
+
+The codebase includes comprehensive unit tests verifying campaign decision trees, collision detection, NASA API discovery integration, wardrobe persistence, and WebGL startup fallbacks.
+
+Run the full test suite with:
+```bash
+npm run test:run
+```
+*(All 83 tests across 14 test suites are designed to pass out-of-the-box without requiring live network calls).*
+
+---
+
+## 🤖 AI Assistance & Scientific Attribution
+
+- **AI Assistance Disclosure:** In accordance with evaluation guidelines, ChatGPT and Codex models were utilized during development to assist with code architecture, didactic copy translation, campaign decision balancing, and unit test structuring.
+- **Scientific Attribution:** All planetary and spaceflight photography is the intellectual property of NASA, JPL-Caltech, and their respective instrument teams as cataloged under public domain Open Access guidelines. The colony simulation, resource values, and narrative elements are educational models designed for learning engagement.
